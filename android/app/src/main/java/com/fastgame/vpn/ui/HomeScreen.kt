@@ -7,6 +7,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,7 +50,6 @@ import androidx.compose.ui.unit.sp
 import com.fastgame.vpn.R
 import com.fastgame.vpn.data.Account
 import com.fastgame.vpn.data.VpnServerInfo
-import com.fastgame.vpn.util.flagEmoji
 import com.fastgame.vpn.util.formatDate
 import com.fastgame.vpn.util.formatDuration
 import com.fastgame.vpn.vpn.ConnectionState
@@ -133,9 +137,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         }
         Spacer(Modifier.height(20.dp))
 
-        ServerCard(ui.servers, ui.selectedServer, conn.phase == Phase.IDLE, actions.onSelectServer)
-        Spacer(Modifier.height(12.dp))
-        if (account != null) PlanCard(account, conn, ui)
+        InfoRow(ui.selectedServer, ui.servers, conn.phase == Phase.IDLE, actions.onSelectServer, account, conn)
         Spacer(Modifier.height(12.dp))
         if (account != null) IdCard(account.userCode, actions)
         Spacer(Modifier.height(12.dp))
@@ -163,6 +165,7 @@ private fun statusText(phase: Phase): String = stringResource(
 @Composable
 private fun ConnectButton(phase: Phase, onClick: () -> Unit) {
     val connected = phase == Phase.CONNECTED
+    val label = stringResource(if (connected) R.string.hint_tap_to_disconnect else R.string.hint_tap_to_connect)
     val busy = phase == Phase.STARTING || phase == Phase.CONNECTING || phase == Phase.DISCONNECTING
     Box(
         Modifier
@@ -175,14 +178,29 @@ private fun ConnectButton(phase: Phase, onClick: () -> Unit) {
             .clip(CircleShape)
             .background(if (connected) NeonBrush else Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x0FFFFFFF))))
             .border(2.dp, NeonBrush, CircleShape)
-            .clickable(enabled = phase != Phase.DISCONNECTING, onClick = onClick),
+            .semantics { contentDescription = label }
+            .clickable(enabled = phase != Phase.DISCONNECTING, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         if (busy) {
             CircularProgressIndicator(color = Accent, modifier = Modifier.size(56.dp))
         } else {
-            Text("⏻", fontSize = 64.sp, color = if (connected) Color(0xFF031A16) else Accent)
+            PowerIcon(if (connected) Color(0xFF031A16) else Accent)
         }
+    }
+}
+
+@Composable
+private fun PowerIcon(color: Color) {
+    androidx.compose.foundation.Canvas(Modifier.size(64.dp)) {
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = 7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        val pad = 8.dp.toPx()
+        drawArc(
+            color, startAngle = -60f, sweepAngle = 300f, useCenter = false, style = stroke,
+            topLeft = androidx.compose.ui.geometry.Offset(pad, pad + 4.dp.toPx()),
+            size = androidx.compose.ui.geometry.Size(size.width - 2 * pad, size.height - 2 * pad - 4.dp.toPx()),
+        )
+        drawLine(color, androidx.compose.ui.geometry.Offset(size.width / 2, 4.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width / 2, size.height * 0.5f), 7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
     }
 }
 
@@ -216,61 +234,78 @@ private fun Card(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun ServerCard(servers: List<VpnServerInfo>, selected: VpnServerInfo?, enabled: Boolean, onSelect: (Int) -> Unit) {
+private fun SquareCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier.aspectRatio(1f).glass().padding(14.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+        content = content,
+    )
+}
+
+@Composable
+private fun InfoRow(server: VpnServerInfo?, servers: List<VpnServerInfo>, enabled: Boolean, onSelect: (Int) -> Unit, account: Account?, conn: ConnectionState) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        ServerSquare(server, servers, enabled, onSelect, Modifier.weight(1f))
+        TimeSquare(account, conn, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>, enabled: Boolean, onSelect: (Int) -> Unit, modifier: Modifier) {
     var open by remember { mutableStateOf(false) }
     val fa = Locale.getDefault().language == "fa"
-    Card {
+    val canPick = enabled && servers.size > 1
+    SquareCard(modifier.clickable(enabled = canPick, role = Role.Button) { open = true }) {
         Text(stringResource(R.string.label_server), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-        Box {
-            Row(
-                Modifier.fillMaxWidth().clickable(enabled = enabled && servers.size > 1) { open = true }.padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(selected?.let { flagEmoji(it.countryCode) } ?: "🌐", fontSize = 28.sp)
-                Spacer(Modifier.size(12.dp))
-                Column {
-                    Text(selected?.let { if (fa) it.countryNameFa else it.countryNameEn } ?: stringResource(R.string.choose_server), fontWeight = FontWeight.SemiBold)
-                    selected?.let { Text(it.name, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                }
-            }
-            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                servers.forEach { s ->
-                    DropdownMenuItem(
-                        text = { Text("${flagEmoji(s.countryCode)}  ${if (fa) s.countryNameFa else s.countryNameEn} · ${s.name}") },
-                        onClick = { open = false; onSelect(s.id) },
-                    )
-                }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // A code badge instead of a flag emoji: emoji must not be used as icons.
+            Box(
+                Modifier.size(44.dp).clip(CircleShape).background(NeonBrush),
+                contentAlignment = Alignment.Center,
+            ) { Text(selected?.countryCode?.uppercase() ?: "--", color = Color(0xFF031A16), fontWeight = FontWeight.Bold) }
+            Text(
+                selected?.let { if (fa) it.countryNameFa else it.countryNameEn } ?: stringResource(R.string.choose_server),
+                fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2,
+            )
+        }
+        Text(selected?.name.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, maxLines = 1)
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            servers.forEach { s ->
+                DropdownMenuItem(
+                    text = { Text("${s.countryCode.uppercase()}  ${if (fa) s.countryNameFa else s.countryNameEn} · ${s.name}") },
+                    onClick = { open = false; onSelect(s.id) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun PlanCard(account: Account, conn: ConnectionState, ui: HomeUiState) {
+private fun TimeSquare(account: Account?, conn: ConnectionState, modifier: Modifier) {
     val locale = Locale.getDefault()
-    Card {
+    SquareCard(modifier) {
+        if (account == null) return@SquareCard
         if (account.isVip) {
-            Text(stringResource(R.string.label_vip), color = Accent, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.vip_unlimited), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.label_vip), color = Accent, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text("∞", fontSize = 44.sp, fontWeight = FontWeight.Bold)
             Text(
                 if (account.vipLifetime || account.vipExpiresAtMillis == null) stringResource(R.string.vip_lifetime)
                 else stringResource(R.string.vip_until, formatDate(account.vipExpiresAtMillis, locale)),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp,
             )
         } else {
-            val connected = conn.phase != Phase.IDLE && conn.remainingSeconds != null
-            val left = if (connected) conn.remainingSeconds!! else account.quota.remainingSeconds
+            val live = conn.phase != Phase.IDLE && conn.remainingSeconds != null
+            val left = if (live) conn.remainingSeconds!! else account.quota.remainingSeconds
             Text(stringResource(R.string.label_time_left), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-            Text(formatDuration(left, locale), fontSize = 32.sp, fontWeight = FontWeight.Bold)
+            Text(formatDuration(left, locale), fontSize = 28.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             val total = (account.quota.totalSeconds / 60).toInt()
-            Text(stringResource(R.string.free_plan_note, total), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-            account.quota.resetsAtMillis?.let { reset ->
-                val secs = ((reset - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
-                if (account.quota.usedSeconds > 0) {
-                    Text(stringResource(R.string.resets_in, formatDuration(secs, locale)), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-                }
-            }
+            val reset = account.quota.resetsAtMillis
+            Text(
+                if (reset != null && account.quota.usedSeconds > 0)
+                    stringResource(R.string.resets_in, formatDuration(((reset - System.currentTimeMillis()) / 1000).coerceAtLeast(0), locale))
+                else stringResource(R.string.free_plan_note, total),
+                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp,
+            )
         }
     }
 }

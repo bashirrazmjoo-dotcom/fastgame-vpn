@@ -34,6 +34,9 @@ interface VpnEngine {
     val detail: StateFlow<String?> get() = NO_DETAIL
     suspend fun connect(profile: VpnProfile)
     suspend fun disconnect()
+
+    /** Last engine log lines (without secrets), shown when a connection fails. */
+    fun diagnostics(): String = ""
 }
 
 /** Honest placeholder used until a real OpenVPN engine is plugged in: it never pretends to connect. */

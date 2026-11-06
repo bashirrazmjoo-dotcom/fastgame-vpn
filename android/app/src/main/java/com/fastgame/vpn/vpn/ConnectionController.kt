@@ -108,7 +108,9 @@ class ConnectionController(
 
             val profile = VpnProfile(server.name, started.ovpnConfig, started.authUsername, started.authPassword)
             withTimeoutOrNull(CONNECT_TIMEOUT_MS) { engine.connect(profile) }
-                ?: throw EngineException("Timed out while connecting.")
+                ?: throw EngineException(
+                    "Timed out while connecting." + engine.diagnostics().let { if (it.isBlank()) "" else "\n$it" },
+                )
 
             notice = evaluate(backend.confirmConnected(started.sessionId))
             if (notice == null) {

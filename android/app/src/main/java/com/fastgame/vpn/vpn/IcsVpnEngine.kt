@@ -37,6 +37,19 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
     override val detail: StateFlow<String?> = _detail.asStateFlow()
 
     @Volatile private var active = false
+    private val logLines = ArrayDeque<String>()
+    private val logListener = VpnStatus.LogListener { item ->
+        val line = runCatching { item.getString(context) }.getOrNull()?.trim().orEmpty()
+        // Never keep anything that could contain credentials.
+        if (line.isNotEmpty() && !line.contains("password", true) && !line.contains("username", true)) {
+            synchronized(logLines) {
+                logLines.addLast(line.take(160))
+                while (logLines.size > MAX_LOG_LINES) logLines.removeFirst()
+            }
+        }
+    }
+
+    override fun diagnostics(): String = synchronized(logLines) { logLines.joinToString("\n") }
     private var icsProfile: IcsProfile? = null
 
     override suspend fun connect(profile: VpnProfile) {
@@ -51,6 +64,8 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
 
         _state.value = EngineState.Connecting
         // Registering replays the last known state once; that stale event is ignored (active == false).
+        synchronized(logLines) { logLines.clear() }
+        VpnStatus.addLogListener(logListener)
         VpnStatus.addStateListener(this)
         sawProgress = false
         active = true
@@ -83,6 +98,7 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
         if (!active && icsProfile == null) return
         withTimeoutOrNull(STOP_TIMEOUT_MS) { stopService() }
         VpnStatus.removeStateListener(this)
+        VpnStatus.removeLogListener(logListener)
         active = false
         runCatching { ProfileManager.setConnectedVpnProfileDisconnected(context) }
         // The temporary profile file holds this session's (short-lived) credentials: remove it.
@@ -139,5 +155,6 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
+        const val MAX_LOG_LINES = 12
     }
 }

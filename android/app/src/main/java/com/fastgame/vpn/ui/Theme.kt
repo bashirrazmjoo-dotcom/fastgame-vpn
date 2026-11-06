@@ -45,6 +45,11 @@ fun FastGameTheme(content: @Composable () -> Unit) {
 /** Full-screen background: dark gradient with two soft glowing orbs. */
 @Composable
 fun Web3Background(content: @Composable BoxScope.() -> Unit) {
+    // Surface provides the readable default text color (a bare Box would leave text black).
+    androidx.compose.material3.Surface(
+        color = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+    ) {
     Box(
         Modifier
             .fillMaxSize()
@@ -71,12 +76,13 @@ fun Web3Background(content: @Composable BoxScope.() -> Unit) {
             },
         content = content,
     )
+    }
 }
 
 /** Frosted-glass panel: translucent fill plus a faint gradient border. */
 fun Modifier.glass(corner: Dp = 20.dp): Modifier = this
     .background(
-        Brush.linearGradient(listOf(Color(0x24FFFFFF), Color(0x0DFFFFFF))),
+        Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x1AFFFFFF))),
         RoundedCornerShape(corner),
     )
     .border(
