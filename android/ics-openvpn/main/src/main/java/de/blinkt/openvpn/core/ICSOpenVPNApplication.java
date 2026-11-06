@@ -32,8 +32,7 @@ public class ICSOpenVPNApplication extends Application {
 
     @Override
     public void onCreate() {
-        if (BuildConfig.BUILD_TYPE.equals("debug"))
-            enableStrictModes();
+        // FastGame: StrictMode debugging disabled; its violations flooded the engine log.
 
         if("robolectric".equals(Build.FINGERPRINT))
             return;

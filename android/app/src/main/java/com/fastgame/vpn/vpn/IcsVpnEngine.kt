@@ -41,7 +41,9 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
     private val logListener = VpnStatus.LogListener { item ->
         val line = runCatching { item.getString(context) }.getOrNull()?.trim().orEmpty()
         // Never keep anything that could contain credentials.
-        if (line.isNotEmpty() && !line.contains("password", true) && !line.contains("username", true)) {
+        if (line.isNotEmpty() && !line.contains("password", true) && !line.contains("username", true) &&
+            !line.contains("strictmode", true) && !line.contains("untagged socket", true)
+        ) {
             synchronized(logLines) {
                 logLines.addLast(line.take(160))
                 while (logLines.size > MAX_LOG_LINES) logLines.removeFirst()
@@ -49,7 +51,10 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
         }
     }
 
-    override fun diagnostics(): String = synchronized(logLines) { logLines.joinToString("\n") }
+    override fun diagnostics(): String {
+        val lines = synchronized(logLines) { logLines.joinToString("\n") }
+        return "state: ${_detail.value ?: "-"} / ${_state.value}\n$lines"
+    }
     private var icsProfile: IcsProfile? = null
 
     override suspend fun connect(profile: VpnProfile) {
@@ -155,6 +160,6 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        const val MAX_LOG_LINES = 12
+        const val MAX_LOG_LINES = 25
     }
 }
