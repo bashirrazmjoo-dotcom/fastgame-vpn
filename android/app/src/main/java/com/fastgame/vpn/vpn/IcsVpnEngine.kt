@@ -53,12 +53,14 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
         }
     }
 
+    @Volatile private var credentialsNote = ""
+
     override fun diagnostics(): String {
         val lines = synchronized(logLines) { logLines.joinToString("\n") }
         val crash = runCatching {
             File(context.filesDir, FastGameApp.CRASH_FILE).takeIf { it.exists() }?.readText()
         }.getOrNull()
-        return "state: ${_detail.value ?: "-"} / ${_state.value}\n$lines" + (crash?.let { "\n--- crash ---\n$it" } ?: "")
+        return "state: ${_detail.value ?: "-"} / ${_state.value}\n$credentialsNote\n$lines" + (crash?.let { "\n--- crash ---\n$it" } ?: "")
     }
     private var icsProfile: IcsProfile? = null
 
@@ -95,8 +97,12 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
             parser.parseConfig(StringReader(profile.ovpnConfig))
             return parser.convertProfile().also {
                 it.mName = profile.serverName
-                it.mUsername = profile.username.orEmpty()
-                it.mPassword = profile.password.orEmpty()
+                // Keep credentials that are part of the profile itself unless the server supplies its own.
+                if (!profile.username.isNullOrBlank()) it.mUsername = profile.username
+                if (!profile.password.isNullOrBlank()) it.mPassword = profile.password
+                credentialsNote = "login: server=${!profile.username.isNullOrBlank()} profile=${!it.mUsername.isNullOrBlank()} " +
+                    "authType=${it.mAuthenticationType}"
+                
             }
         } catch (e: ConfigParser.ConfigParseError) {
             throw EngineException("The server profile is invalid: ${e.message}")
