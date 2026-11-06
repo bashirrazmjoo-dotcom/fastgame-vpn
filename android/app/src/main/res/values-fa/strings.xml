@@ -32,6 +32,7 @@
     <string name="label_your_id">شناسه شما</string>
     <string name="copy_id">کپی</string>
     <string name="id_copied">شناسه کپی شد</string>
+    <string name="details_copied">کپی شد</string>
     <string name="buy_vip">خرید VIP</string>
     <string name="support">پشتیبانی تلگرام</string>
     <string name="privacy_policy">حریم خصوصی</string>

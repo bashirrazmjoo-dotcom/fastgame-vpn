@@ -75,6 +75,10 @@ class MainActivity : AppCompatActivity() {
                             vm.disconnect()
                         }
                     },
+                    onCopyText = { text ->
+                        getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("FastGame", text))
+                        Toast.makeText(this, R.string.details_copied, Toast.LENGTH_SHORT).show()
+                    },
                     onSelectServer = vm::selectServer,
                     onRetry = vm::load,
                     onCopyId = { code ->

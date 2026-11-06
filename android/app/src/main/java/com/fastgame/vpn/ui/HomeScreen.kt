@@ -62,6 +62,7 @@ class HomeActions(
     val onSelectServer: (Int) -> Unit,
     val onRetry: () -> Unit,
     val onCopyId: (String) -> Unit,
+    val onCopyText: (String) -> Unit,
     val onBuyVip: () -> Unit,
     val onSupport: () -> Unit,
     val onPrivacy: () -> Unit,
@@ -120,7 +121,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         }
         Spacer(Modifier.height(16.dp))
 
-        NoticeBanner(conn.notice, actions.onDismissNotice)
+        NoticeBanner(conn.notice, actions.onDismissNotice, actions.onCopyText)
 
         Spacer(Modifier.height(8.dp))
         ConnectButton(conn.phase, actions.onToggle)
@@ -205,7 +206,7 @@ private fun PowerIcon(color: Color) {
 }
 
 @Composable
-private fun NoticeBanner(notice: Notice?, onDismiss: () -> Unit) {
+private fun NoticeBanner(notice: Notice?, onDismiss: () -> Unit, onCopy: (String) -> Unit) {
     if (notice == null) return
     val text = when (notice) {
         is Notice.QuotaExhausted -> stringResource(R.string.notice_quota_exhausted)
@@ -221,10 +222,15 @@ private fun NoticeBanner(notice: Notice?, onDismiss: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .glass(14.dp)
-            .border(1.dp, Warning.copy(alpha = 0.8f), RoundedCornerShape(14.dp))
-            .clickable(onClick = onDismiss),
+            .border(1.dp, Warning.copy(alpha = 0.8f), RoundedCornerShape(14.dp)),
     ) {
-        Text(text, Modifier.padding(14.dp), color = Warning)
+        Column(Modifier.padding(14.dp)) {
+            Text(text, color = Warning)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = { onCopy(text) }) { Text(stringResource(R.string.copy_id)) }
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+            }
+        }
     }
 }
 

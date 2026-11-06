@@ -32,6 +32,7 @@
     <string name="label_your_id">Your ID</string>
     <string name="copy_id">Copy</string>
     <string name="id_copied">ID copied</string>
+    <string name="details_copied">Copied</string>
     <string name="buy_vip">Buy VIP</string>
     <string name="support">Telegram support</string>
     <string name="privacy_policy">Privacy policy</string>
