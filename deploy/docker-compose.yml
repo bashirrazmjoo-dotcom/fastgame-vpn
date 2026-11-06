@@ -36,7 +36,7 @@ services:
     volumes:
       - ./nginx/fastgame.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/proxy_headers.inc:/etc/nginx/conf.d/proxy_headers.inc:ro
-      - ./certs:/etc/nginx/certs:ro   # fullchain.pem + privkey.pem (e.g. from certbot)
+      - /etc/letsencrypt:/etc/letsencrypt:ro   # certificate from certbot
 
 volumes:
   dbdata:
