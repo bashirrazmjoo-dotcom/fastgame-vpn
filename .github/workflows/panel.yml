@@ -1,0 +1,32 @@
+name: Panel build
+
+# Builds the admin panel and publishes the static files to the `panel-dist` branch,
+# so a server can fetch them without Node installed.
+on:
+  push:
+    branches: [main]
+    paths: ["admin/**", ".github/workflows/panel.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci && npm run build
+        working-directory: admin
+      - name: Publish to panel-dist
+        run: |
+          cd admin/dist
+          git init -q -b panel-dist
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "panel build ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" panel-dist

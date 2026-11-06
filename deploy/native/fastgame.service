@@ -1,0 +1,21 @@
+[Unit]
+Description=FastGame VPN API
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+User=fastgame
+Group=fastgame
+WorkingDirectory=/opt/fastgame/app/backend
+EnvironmentFile=/opt/fastgame/.env
+ExecStartPre=/opt/fastgame/venv/bin/alembic upgrade head
+ExecStart=/opt/fastgame/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 18080 --proxy-headers --forwarded-allow-ips=127.0.0.1 --workers 2
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
