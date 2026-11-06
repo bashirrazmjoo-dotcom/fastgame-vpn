@@ -65,7 +65,7 @@ class ConnectionControllerTest {
         assertEquals(Phase.CONNECTED, c.state.value.phase)
         advanceTimeBy(25_000); runCurrent()
         assertTrue(b.beats >= 2)
-        assertEquals(75L, c.state.value.remainingSeconds)
+        assertEquals(95L, c.state.value.remainingSeconds) // re-anchored on the 100s the server reported at t=20s
         c.disconnect(); runCurrent()
         assertEquals(Phase.IDLE, c.state.value.phase)
         assertEquals(1, b.stops); assertEquals(1, e.disconnects)
