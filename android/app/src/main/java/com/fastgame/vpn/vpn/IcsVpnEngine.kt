@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import com.fastgame.vpn.FastGameApp
+import java.io.File
 import java.io.IOException
 import java.io.StringReader
 import de.blinkt.openvpn.VpnProfile as IcsProfile
@@ -45,7 +47,7 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
             !line.contains("strictmode", true) && !line.contains("untagged socket", true)
         ) {
             synchronized(logLines) {
-                logLines.addLast(line.take(160))
+                logLines.addLast(line.take(400))
                 while (logLines.size > MAX_LOG_LINES) logLines.removeFirst()
             }
         }
@@ -53,7 +55,10 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
 
     override fun diagnostics(): String {
         val lines = synchronized(logLines) { logLines.joinToString("\n") }
-        return "state: ${_detail.value ?: "-"} / ${_state.value}\n$lines"
+        val crash = runCatching {
+            File(context.filesDir, FastGameApp.CRASH_FILE).takeIf { it.exists() }?.readText()
+        }.getOrNull()
+        return "state: ${_detail.value ?: "-"} / ${_state.value}\n$lines" + (crash?.let { "\n--- crash ---\n$it" } ?: "")
     }
     private var icsProfile: IcsProfile? = null
 
@@ -70,6 +75,7 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
         _state.value = EngineState.Connecting
         // Registering replays the last known state once; that stale event is ignored (active == false).
         synchronized(logLines) { logLines.clear() }
+        runCatching { File(context.filesDir, FastGameApp.CRASH_FILE).delete() }
         VpnStatus.addLogListener(logListener)
         VpnStatus.addStateListener(this)
         sawProgress = false
