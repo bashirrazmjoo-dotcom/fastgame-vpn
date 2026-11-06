@@ -42,6 +42,8 @@ data class ConnectionState(
     /** Seconds of free time left; null when unlimited (VIP) or unknown. */
     val remainingSeconds: Long? = null,
     val notice: Notice? = null,
+    /** Engine progress text while connecting. */
+    val detail: String? = null,
 )
 
 /**
@@ -65,6 +67,14 @@ class ConnectionController(
     val state: StateFlow<ConnectionState> = _state.asStateFlow()
 
     private var job: Job? = null
+
+    init {
+        scope.launch {
+            engine.detail.collect { text ->
+                _state.update { if (it.phase == Phase.IDLE) it else it.copy(detail = text) }
+            }
+        }
+    }
     private var anchorRemaining: Long? = null
     private var anchorAtMillis: Long = 0L
 

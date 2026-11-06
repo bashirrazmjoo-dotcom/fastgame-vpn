@@ -33,12 +33,21 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
     private val _state = MutableStateFlow<EngineState>(EngineState.Disconnected)
     override val state: StateFlow<EngineState> = _state.asStateFlow()
 
+    private val _detail = MutableStateFlow<String?>(null)
+    override val detail: StateFlow<String?> = _detail.asStateFlow()
+
     @Volatile private var active = false
     private var icsProfile: IcsProfile? = null
 
     override suspend fun connect(profile: VpnProfile) {
         val parsed = withContext(Dispatchers.Default) { parse(profile) }
+        val problem = parsed.checkProfile(context)
+        if (problem != de.blinkt.openvpn.R.string.no_error_found) {
+            throw EngineException("Invalid server profile: " + context.getString(problem))
+        }
         icsProfile = parsed
+        // The VPN service runs in another process and loads the profile from disk by its id.
+        ProfileManager.setTemporaryProfile(context, parsed)
 
         _state.value = EngineState.Connecting
         // Registering replays the last known state once; that stale event is ignored (active == false).
@@ -79,6 +88,7 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
         // The temporary profile file holds this session's (short-lived) credentials: remove it.
         icsProfile?.let { p -> runCatching { ProfileManager.getInstance(context).removeProfile(context, p) } }
         icsProfile = null
+        _detail.value = null
         _state.value = EngineState.Disconnected
     }
 
@@ -107,6 +117,7 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
         state: String?, logmessage: String?, localizedResId: Int, level: ConnectionStatus?, intent: Intent?,
     ) {
         if (!active) return
+        _detail.value = listOfNotNull(state, logmessage).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { null }
         _state.value = when (level) {
             ConnectionStatus.LEVEL_CONNECTED -> EngineState.Connected
             ConnectionStatus.LEVEL_AUTH_FAILED -> EngineState.Failed("Authentication failed.")

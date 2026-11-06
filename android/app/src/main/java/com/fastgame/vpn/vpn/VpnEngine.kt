@@ -29,6 +29,9 @@ class EngineException(message: String) : Exception(message)
  */
 interface VpnEngine {
     val state: StateFlow<EngineState>
+
+    /** Short progress text from the engine (for display and diagnosis); null when there is none. */
+    val detail: StateFlow<String?> get() = NO_DETAIL
     suspend fun connect(profile: VpnProfile)
     suspend fun disconnect()
 }
@@ -44,3 +47,5 @@ class UnavailableVpnEngine : VpnEngine {
 
     override suspend fun disconnect() = Unit
 }
+
+private val NO_DETAIL: StateFlow<String?> = MutableStateFlow(null)

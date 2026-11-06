@@ -1,6 +1,7 @@
 package com.fastgame.vpn.ui
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -68,7 +69,7 @@ class HomeActions(
 
 @Composable
 fun HomeScreen(ui: HomeUiState, conn: ConnectionState, actions: HomeActions) {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    Web3Background {
         when {
             ui.loading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -126,6 +127,10 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp,
         )
+        if (conn.phase != Phase.IDLE && conn.phase != Phase.CONNECTED && !conn.detail.isNullOrBlank()) {
+            Spacer(Modifier.height(6.dp))
+            Text(conn.detail, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, textAlign = TextAlign.Center)
+        }
         Spacer(Modifier.height(20.dp))
 
         ServerCard(ui.servers, ui.selectedServer, conn.phase == Phase.IDLE, actions.onSelectServer)
@@ -159,19 +164,24 @@ private fun statusText(phase: Phase): String = stringResource(
 private fun ConnectButton(phase: Phase, onClick: () -> Unit) {
     val connected = phase == Phase.CONNECTED
     val busy = phase == Phase.STARTING || phase == Phase.CONNECTING || phase == Phase.DISCONNECTING
-    val color = if (connected) Accent else MaterialTheme.colorScheme.surfaceVariant
     Box(
         Modifier
-            .size(160.dp)
+            .size(176.dp)
+            .background(
+                Brush.radialGradient(listOf((if (connected) Accent else AccentViolet).copy(alpha = 0.35f), Color.Transparent)),
+                CircleShape,
+            )
+            .padding(8.dp)
             .clip(CircleShape)
-            .background(color)
+            .background(if (connected) NeonBrush else Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x0FFFFFFF))))
+            .border(2.dp, NeonBrush, CircleShape)
             .clickable(enabled = phase != Phase.DISCONNECTING, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         if (busy) {
             CircularProgressIndicator(color = Accent, modifier = Modifier.size(56.dp))
         } else {
-            Text("⏻", fontSize = 64.sp, color = if (connected) Color(0xFF04210F) else Accent)
+            Text("⏻", fontSize = 64.sp, color = if (connected) Color(0xFF031A16) else Accent)
         }
     }
 }
@@ -189,11 +199,12 @@ private fun NoticeBanner(notice: Notice?, onDismiss: () -> Unit) {
         is Notice.EngineFailed -> stringResource(R.string.notice_engine_failed, notice.reason)
         is Notice.ServiceError -> stringResource(R.string.notice_service_error, notice.message)
     }
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, Warning),
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onDismiss),
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .glass(14.dp)
+            .border(1.dp, Warning.copy(alpha = 0.8f), RoundedCornerShape(14.dp))
+            .clickable(onClick = onDismiss),
     ) {
         Text(text, Modifier.padding(14.dp), color = Warning)
     }
@@ -201,9 +212,7 @@ private fun NoticeBanner(notice: Notice?, onDismiss: () -> Unit) {
 
 @Composable
 private fun Card(content: @Composable () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp)) { content() }
-    }
+    Column(Modifier.fillMaxWidth().glass().padding(16.dp)) { content() }
 }
 
 @Composable
