@@ -21,12 +21,15 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.7.1
+          validate-wrappers: false # we run the gradle we install, not the checked-in wrapper jar
 
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest -Pfastgame.apiBaseUrl="$API_BASE_URL"
+        run: gradle testDebugUnitTest -Pfastgame.apiBaseUrl="$API_BASE_URL"
 
       - name: Debug APK
-        run: ./gradlew assembleDebug -Pfastgame.apiBaseUrl="$API_BASE_URL"
+        run: gradle assembleDebug -Pfastgame.apiBaseUrl="$API_BASE_URL"
 
       - name: Restore signing key
         id: key
@@ -45,7 +48,7 @@ jobs:
           FASTGAME_KEYSTORE_PASSWORD: ${{ secrets.FASTGAME_KEYSTORE_PASSWORD }}
           FASTGAME_KEY_ALIAS: ${{ secrets.FASTGAME_KEY_ALIAS }}
           FASTGAME_KEY_PASSWORD: ${{ secrets.FASTGAME_KEY_PASSWORD }}
-        run: ./gradlew assembleRelease bundleRelease -Pfastgame.apiBaseUrl="$API_BASE_URL"
+        run: gradle assembleRelease bundleRelease -Pfastgame.apiBaseUrl="$API_BASE_URL"
 
       - uses: actions/upload-artifact@v4
         with:
