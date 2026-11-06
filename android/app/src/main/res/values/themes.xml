@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background">#FF0B0F1A</color>
+    <color name="ic_launcher_background">#FF0B0F1A</color>
+
+    <!-- AppCompat theme so per-app language switching works; Compose draws the UI. -->
+    <style name="Theme.FastGame" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+    </style>
+</resources>

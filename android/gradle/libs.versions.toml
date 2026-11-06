@@ -1,0 +1,34 @@
+# Versions marked (verified) were read from the current ics-openvpn catalog (Nov 2026)
+# or the official Android docs; the others are long-stable releases.
+[versions]
+agp = "9.4.1"                 # verified
+kotlin = "2.4.10"             # verified
+compose-bom = "2026.09.00"    # verified (official BOM docs)
+androidx-activity = "1.13.0"  # verified
+androidx-appcompat = "1.8.0"  # verified
+androidx-core = "1.19.0"      # verified
+androidx-lifecycle = "2.11.0" # verified
+okhttp = "5.5.0"              # verified
+coroutines = "1.10.2"
+junit = "4.13.2"              # verified
+json-org = "20260814"         # verified
+
+[libraries]
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidx-activity" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+json-org = { group = "org.json", name = "json", version.ref = "json-org" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

@@ -1,0 +1,17 @@
+# secrets and local files — never commit
+*.ovpn
+*.jks
+*.keystore
+.env
+**/.env
+# build output
+node_modules/
+dist/
+build/
+.gradle/
+.idea/
+local.properties
+__pycache__/
+.venv/
+*.pyc
+.pytest_cache/

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FastGame</string>
+
+    <string name="status_disconnected">متصل نیستید</string>
+    <string name="status_starting">در حال آماده‌سازی…</string>
+    <string name="status_connecting">در حال اتصال…</string>
+    <string name="status_connected">متصل هستید</string>
+    <string name="status_disconnecting">در حال قطع اتصال…</string>
+    <string name="hint_tap_to_connect">برای اتصال لمس کنید</string>
+    <string name="hint_tap_to_disconnect">برای قطع اتصال لمس کنید</string>
+
+    <string name="label_server">سرور</string>
+    <string name="choose_server">انتخاب سرور</string>
+    <string name="label_time_left">زمان رایگان باقی‌مانده</string>
+    <string name="free_plan_note">%1$d دقیقه استفاده رایگان در هر ۲۴ ساعت</string>
+    <string name="label_vip">VIP</string>
+    <string name="vip_unlimited">استفاده نامحدود</string>
+    <string name="vip_until">فعال تا %1$s</string>
+    <string name="vip_lifetime">دسترسی دائمی</string>
+    <string name="resets_in">شارژ مجدد زمان رایگان تا %1$s دیگر</string>
+
+    <string name="notice_quota_exhausted">زمان رایگان شما تمام شد.</string>
+    <string name="notice_blocked">این حساب مسدود شده است. لطفاً با پشتیبانی تماس بگیرید.</string>
+    <string name="notice_session_ended">اتصال از سمت سرور پایان یافت.</string>
+    <string name="notice_connection_lost">اتصال VPN قطع شد.</string>
+    <string name="notice_network_lost">ارتباط با سرویس قطع شد.</string>
+    <string name="notice_server_unavailable">این سرور در دسترس نیست. سرور دیگری را امتحان کنید.</string>
+    <string name="notice_engine_failed">برقراری VPN ناموفق بود: %1$s</string>
+    <string name="notice_service_error">خطای سرویس: %1$s</string>
+
+    <string name="label_your_id">شناسه شما</string>
+    <string name="copy_id">کپی</string>
+    <string name="id_copied">شناسه کپی شد</string>
+    <string name="buy_vip">خرید VIP</string>
+    <string name="support">پشتیبانی تلگرام</string>
+    <string name="privacy_policy">حریم خصوصی</string>
+    <string name="retry">تلاش مجدد</string>
+    <string name="loading">در حال بارگذاری…</string>
+    <string name="load_error">ارتباط با سرویس برقرار نشد. لطفاً اینترنت خود را بررسی کنید.</string>
+    <string name="update_required">برای ادامه، برنامه را به‌روزرسانی کنید.</string>
+
+    <string name="disclosure_title">قبل از اتصال</string>
+    <string name="disclosure_body">FastGame برای ایجاد یک تونل امن از «سرویس VPN» اندروید استفاده می‌کند. تا زمانی که متصل هستید، تمام ترافیک اینترنت دستگاه شما از سرورهای ما عبور می‌کند.\n\nبرای اجرای نسخه رایگان، سرویس ما فقط یک شناسه ناشناس دستگاه و مدت زمان اتصال شما را ذخیره می‌کند. ثبت‌نام و اطلاعات شخصی لازم نیست.</string>
+    <string name="disclosure_accept">می‌پذیرم، ادامه</string>
+    <string name="disclosure_decline">انصراف</string>
+
+    <string name="notification_channel">اتصال VPN</string>
+    <string name="notification_connecting">در حال اتصال…</string>
+    <string name="notification_connected">متصل · %1$s باقی‌مانده</string>
+    <string name="notification_connected_vip">متصل · VIP</string>
+    <string name="notification_disconnecting">در حال قطع اتصال…</string>
+    <string name="action_disconnect">قطع اتصال</string>
+</resources>
