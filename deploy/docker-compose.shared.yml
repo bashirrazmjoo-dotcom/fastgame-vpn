@@ -1,0 +1,35 @@
+# For a server whose ports 80/443 are already used by another web server (Apache/Nginx).
+# No port is opened to the internet: the API listens on 127.0.0.1:18080 and the panel on
+# 127.0.0.1:18081, and the existing web server proxies fg.razmjou.com to them.
+# Usage: docker compose -f docker-compose.shared.yml up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fastgame
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      POSTGRES_DB: fastgame
+    volumes: [dbdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fastgame"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ../backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      FG_DATABASE_URL: postgresql+psycopg://fastgame:${DB_PASSWORD}@db:5432/fastgame
+    depends_on:
+      db: { condition: service_healthy }
+    ports: ["127.0.0.1:18080:8000"]
+
+  admin:
+    build: ../admin
+    restart: unless-stopped
+    ports: ["127.0.0.1:18081:80"]
+
+volumes:
+  dbdata:
