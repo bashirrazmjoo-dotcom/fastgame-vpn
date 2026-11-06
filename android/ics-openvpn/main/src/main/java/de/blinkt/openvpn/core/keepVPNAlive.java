@@ -76,6 +76,9 @@ public class keepVPNAlive extends JobService implements VpnStatus.StateListener 
     }
 
     public static void scheduleKeepVPNAliveJobService(Context c, VpnProfile vp) {
+        // FastGame: no persistent keep-alive job. A session must be started by the app (which meters
+        // the time on the server); it must never be revived by the OS or after a reboot.
+        if (true) return;
         ComponentName keepVPNAliveComponent = new ComponentName(c, keepVPNAlive.class);
         JobInfo.Builder jib = new JobInfo.Builder(JOBID_KEEPVPNALIVE, keepVPNAliveComponent);
 
