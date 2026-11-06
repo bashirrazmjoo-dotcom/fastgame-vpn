@@ -14,3 +14,5 @@ Native dependencies (openvpn, openssl, mbedtls, openvpn3, asio, lz4, fmt) are gi
 - `main/src/main/AndroidManifest.xml`: removed the external-control API, boot receiver, exported
   activities/aliases, and the QUERY_ALL_PACKAGES / storage / local-network permissions.
 - Removed: the original UI (`src/ui`), tests, translations tooling, `remoteExample`.
+- `OpenVPNService.onStartCommand`: always calls startForeground (upstream skipped it when any other notification of the app was visible, which crashed the service with ForegroundServiceDidNotStartInTime).
+- `ICSOpenVPNApplication`: StrictMode debugging disabled.
