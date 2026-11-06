@@ -8,3 +8,4 @@ pydantic-settings
 pyjwt
 argon2-cffi
 cryptography
+httpx

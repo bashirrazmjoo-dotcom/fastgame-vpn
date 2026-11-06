@@ -1,3 +1,2 @@
 -r requirements.lock
 pytest
-httpx
