@@ -3,3 +3,8 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.conscrypt.**
 -dontwarn org.openjsse.**
+
+# ics-openvpn: JNI callbacks, AIDL binders and serialized profiles are accessed by name.
+-keep class de.blinkt.openvpn.** { *; }
+-keep class net.openvpn.ovpn3.** { *; }
+-keepclasseswithmembernames class * { native <methods>; }

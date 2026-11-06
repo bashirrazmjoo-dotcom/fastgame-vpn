@@ -15,3 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "FastGame"
 include(":app")
+include(":ics-main")
+project(":ics-main").projectDir = file("ics-openvpn/main")

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FastGame VPN: trimmed manifest of ics-openvpn used as an embedded library.
+  Removed from upstream (see ../FASTGAME-CHANGES.md): the external control API, boot receiver,
+  QUERY_ALL_PACKAGES / storage permissions and every exported entry point other than the VPN
+  service itself, so other apps cannot start or stop the tunnel.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <application>
+        <activity
+            android:name=".activities.DisconnectVPN"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=".DisconnectVPN"
+            android:theme="@style/blinkt.dialog" />
+
+        <activity
+            android:name=".LaunchVPN"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=".LaunchVPN"
+            android:theme="@style/blinkt.dialog" />
+
+        <service
+            android:name=".core.OpenVPNService"
+            android:exported="true"
+            android:foregroundServiceType="specialUse"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:process=":openvpn">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="vpn" />
+        </service>
+
+        <service
+            android:name=".core.OpenVPNStatusService"
+            android:exported="false"
+            android:process=":openvpn" />
+
+        <service
+            android:name=".core.keepVPNAlive"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:process=":openvpn" />
+    </application>
+</manifest>

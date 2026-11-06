@@ -1,13 +1,12 @@
 package com.fastgame.vpn
 
-import android.app.Application
+import de.blinkt.openvpn.core.ICSOpenVPNApplication
 
-class FastGameApp : Application() {
-    lateinit var container: AppContainer
-        private set
-
-    override fun onCreate() {
-        super.onCreate()
-        container = AppContainer(this)
-    }
+/**
+ * Extends the engine's application class: it sets up the engine's status listener and
+ * notification channels. The engine's VPN service runs in a second process (":openvpn") that
+ * also creates this class, so the container is created lazily and only used in the main process.
+ */
+class FastGameApp : ICSOpenVPNApplication() {
+    val container: AppContainer by lazy { AppContainer(this) }
 }

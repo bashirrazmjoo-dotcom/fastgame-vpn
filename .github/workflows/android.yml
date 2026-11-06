@@ -16,6 +16,10 @@ jobs:
       API_BASE_URL: ${{ vars.API_BASE_URL || 'https://fg.razmjou.com/' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive   # native OpenVPN sources (ics-openvpn dependencies)
+      - name: Native build tools
+        run: sudo apt-get update && sudo apt-get install -y swig
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

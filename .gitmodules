@@ -1,0 +1,21 @@
+[submodule "openvpn"]
+	path = android/ics-openvpn/main/src/main/cpp/openvpn
+	url = https://github.com/schwabe/openvpn.git
+[submodule "openssl"]
+	path = android/ics-openvpn/main/src/main/cpp/openssl
+	url = https://github.com/schwabe/platform_external_openssl.git
+[submodule "mbedtls"]
+	path = android/ics-openvpn/main/src/main/cpp/mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "openvpn3"]
+	path = android/ics-openvpn/main/src/main/cpp/openvpn3
+	url = https://github.com/schwabe/openvpn3.git
+[submodule "asio"]
+	path = android/ics-openvpn/main/src/main/cpp/asio
+	url = https://github.com/chriskohlhoff/asio.git
+[submodule "lz4"]
+	path = android/ics-openvpn/main/src/main/cpp/lz4
+	url = https://github.com/lz4/lz4.git
+[submodule "fmt"]
+	path = android/ics-openvpn/main/src/main/cpp/fmt
+	url = https://github.com/fmtlib/fmt

@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(project(":ics-main")) // OpenVPN engine (GPLv2), see ics-openvpn/FASTGAME-CHANGES.md
     implementation(libs.okhttp)
     implementation(libs.kotlinx.coroutines.android)
 
