@@ -25,6 +25,7 @@ android {
     defaultConfig {
         minSdk = 26
         buildConfigField("boolean", "openvpn3", "true")
+        buildConfigField("String", "FLAVOR", "\"skeleton\"") // upstream code checks the flavor name
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
