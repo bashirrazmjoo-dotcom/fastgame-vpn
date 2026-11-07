@@ -1,6 +1,7 @@
 """Connect / heartbeat / disconnect. The OpenVPN profile is only released here,
 after the server has checked the block state and the remaining quota."""
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -14,6 +15,7 @@ from app.schemas.session import SessionStateResponse, StartSessionRequest, Start
 from app.core.errors import ApiError
 from app.services import credentials, mikrotik, sessions
 
+log = logging.getLogger("uvicorn.error")
 router = APIRouter(prefix="/v1/sessions", tags=["app"])
 
 
@@ -39,7 +41,8 @@ def start(
         remaining = None if result.vip else int(result.snapshot.remaining_seconds)
         try:
             username, password = credentials.issue(db, server, result.session, remaining)
-        except mikrotik.MikrotikError:
+        except mikrotik.MikrotikError as e:
+            log.warning("router account for server %s could not be created: %s", server.id, e)
             raise ApiError(503, "server_unavailable", "This server is not available. Try another one.") from None
     elif server.auth_password_enc:
         password = security.decrypt_secret(server.auth_password_enc)
