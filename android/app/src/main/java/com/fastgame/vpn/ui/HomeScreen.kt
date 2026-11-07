@@ -30,7 +30,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -140,9 +139,9 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (account?.isVip != true) {
-                Button(onClick = actions.onBuyVip, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.buy_vip)) }
+                MetallicButton(stringResource(R.string.buy_vip), actions.onBuyVip, Modifier.weight(1f))
             }
-            OutlinedButton(onClick = actions.onSupport, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.support)) }
+            MetallicButton(stringResource(R.string.support), actions.onSupport, Modifier.weight(1f))
         }
         TextButton(onClick = actions.onPrivacy) { Text(stringResource(R.string.privacy_policy)) }
     }
@@ -163,42 +162,8 @@ private fun statusText(phase: Phase): String = stringResource(
 private fun ConnectButton(phase: Phase, onClick: () -> Unit) {
     val connected = phase == Phase.CONNECTED
     val busy = phase == Phase.STARTING || phase == Phase.CONNECTING || phase == Phase.DISCONNECTING
-    val label = when {
-        busy -> statusText(phase)
-        connected -> stringResource(R.string.btn_disconnect)
-        else -> stringResource(R.string.btn_connect)
-    }
-    ShinyButton(
-        onClick = onClick,
-        enabled = phase != Phase.DISCONNECTING,
-        highlight = if (connected) Accent else AccentViolet,
-        shine = if (connected) Color.White else Color(0xFFB8A4FF),
-        contentDescription = label,
-        modifier = Modifier.fillMaxWidth(0.86f),
-    ) {
-        if (busy) {
-            CircularProgressIndicator(color = Accent, strokeWidth = 3.dp, modifier = Modifier.size(26.dp))
-        } else {
-            PowerIcon(if (connected) Accent else Color.White, 26.dp)
-        }
-        Spacer(Modifier.width(12.dp))
-        Text(label, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun PowerIcon(color: Color, size: androidx.compose.ui.unit.Dp) {
-    androidx.compose.foundation.Canvas(Modifier.size(size)) {
-        val w = this.size.width
-        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = w * 0.11f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-        val pad = w * 0.12f
-        drawArc(
-            color, startAngle = -60f, sweepAngle = 300f, useCenter = false, style = stroke,
-            topLeft = androidx.compose.ui.geometry.Offset(pad, pad + w * 0.06f),
-            size = androidx.compose.ui.geometry.Size(w - 2 * pad, w - 2 * pad - w * 0.06f),
-        )
-        drawLine(color, androidx.compose.ui.geometry.Offset(w / 2, w * 0.06f), androidx.compose.ui.geometry.Offset(w / 2, w * 0.5f), w * 0.11f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-    }
+    val label = stringResource(if (connected) R.string.hint_tap_to_disconnect else R.string.hint_tap_to_connect)
+    PowerButton(connected, busy, phase != Phase.DISCONNECTING, label, onClick)
 }
 
 @Composable
@@ -231,14 +196,9 @@ private fun NoticeBanner(notice: Notice?, onDismiss: () -> Unit, onCopy: (String
 }
 
 @Composable
-private fun Card(content: @Composable () -> Unit) {
-    Column(Modifier.fillMaxWidth().glass().padding(16.dp)) { content() }
-}
-
-@Composable
 private fun SquareCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier.aspectRatio(1f).glass().padding(14.dp),
+        modifier.aspectRatio(1f).liquidGlass().padding(14.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         content = content,
     )
@@ -258,15 +218,16 @@ private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>,
     val fa = Locale.getDefault().language == "fa"
     val canPick = enabled && servers.size > 1
     SquareCard(modifier.clickable(enabled = canPick, role = Role.Button) { open = true }) {
-        Text(stringResource(R.string.label_server), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(flagEmoji(selected?.countryCode), fontSize = 30.sp)
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(flagEmoji(selected?.countryCode), fontSize = 52.sp)
+            Spacer(Modifier.height(8.dp))
+            val country = selected?.let { if (fa) it.countryNameFa else it.countryNameEn }
+            val number = selected?.let { Regex("(\\d+)\\s*$").find(it.name)?.value }
             Text(
-                selected?.let { if (fa) it.countryNameFa else it.countryNameEn } ?: stringResource(R.string.choose_server),
-                fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2,
+                listOfNotNull(country, number).joinToString(" ").ifBlank { stringResource(R.string.choose_server) } + if (canPick) " \u25BE" else "",
+                fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2, textAlign = TextAlign.Center,
             )
         }
-        Text(selected?.name.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, maxLines = 1)
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             servers.forEach { s ->
                 DropdownMenuItem(
@@ -300,16 +261,13 @@ private fun TimeSquare(account: Account?, conn: ConnectionState, modifier: Modif
         } else {
             val live = conn.phase != Phase.IDLE && conn.remainingSeconds != null
             val left = if (live) conn.remainingSeconds!! else account.quota.remainingSeconds
-            Text(stringResource(R.string.label_time_left), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-            Text(formatDuration(left, locale), fontSize = 28.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            val total = (account.quota.totalSeconds / 60).toInt()
-            val reset = account.quota.resetsAtMillis
-            Text(
-                if (reset != null && account.quota.usedSeconds > 0)
-                    stringResource(R.string.resets_in, formatDuration(((reset - System.currentTimeMillis()) / 1000).coerceAtLeast(0), locale))
-                else stringResource(R.string.free_plan_note, total),
-                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp,
-            )
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(stringResource(R.string.label_time_left), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(6.dp))
+                Text(formatDuration(left, locale), fontSize = 32.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.per_24h), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+            }
         }
     }
 }
@@ -317,7 +275,7 @@ private fun TimeSquare(account: Account?, conn: ConnectionState, modifier: Modif
 @Composable
 private fun IdCard(code: String, actions: HomeActions) {
     Row(
-        Modifier.fillMaxWidth().glass(16.dp).padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+        Modifier.fillMaxWidth().liquidGlass(16.dp).padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

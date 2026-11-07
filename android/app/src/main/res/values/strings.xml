@@ -14,7 +14,8 @@
 
     <string name="label_server">Server</string>
     <string name="choose_server">Choose server</string>
-    <string name="label_time_left">Free time left</string>
+    <string name="label_time_left">Time remaining</string>
+    <string name="per_24h">per 24 hours</string>
     <string name="free_plan_note">%1$d minutes of free use every 24 hours</string>
     <string name="label_vip">VIP</string>
     <string name="vip_unlimited">Unlimited use</string>
