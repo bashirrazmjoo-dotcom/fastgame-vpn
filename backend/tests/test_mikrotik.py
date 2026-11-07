@@ -82,7 +82,7 @@ def test_each_session_gets_its_own_account(api, router):
     row = router.secrets[body["auth_username"]]
     assert row["password"] == body["auth_password"]
     assert row["service"] == "ovpn" and row["profile"] == "fg-ovpn"
-    assert row["limit-uptime"] == "2h1m0s"  # 7200s free + 60s slack
+    assert "limit-uptime" not in row  # RouterOS rejects it on /ppp/secret
     assert (body["auth_username"], body["auth_password"]) == security.session_credentials(body["session_id"])
 
 

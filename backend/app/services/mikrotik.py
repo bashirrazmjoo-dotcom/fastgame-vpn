@@ -2,9 +2,9 @@
 
 Every VPN session gets its own PPP secret that
   * is created only after the backend checked block state and quota,
-  * carries ``limit-uptime`` so the router itself cuts the tunnel when the free time is over,
-    even if the backend or the phone disappears,
-  * is deleted (and the active tunnel is kicked) as soon as the session ends.
+  * is deleted (and the active tunnel is kicked) as soon as the session ends. RouterOS has no
+    per-secret time limit for PPP, so the backend is what ends a session: when the quota runs out,
+    the device is blocked, or heartbeats stop (the reaper), the account is revoked within seconds.
 
 Only the ``fg-`` prefixed secrets are ever touched; the router's own users are never read or
 changed.
@@ -70,8 +70,8 @@ def create_account(
         "profile": server.mt_ppp_profile or "default",
         "comment": "fastgame session",
     }
-    if limit_uptime_seconds is not None:
-        body["limit-uptime"] = routeros_duration(limit_uptime_seconds)
+    # limit_uptime_seconds is accepted for callers but not sent: RouterOS rejects
+    # "limit-uptime" on /ppp/secret (HTTP 400 unknown parameter).
     try:
         with client_for(server) as c:
             _check(c.put("/ppp/secret", json=body), "create account")
