@@ -107,12 +107,15 @@ async def handle_start(message: Message, args: str | None) -> bool:
         info = await _call("GET", f"/bot/devices/{code}")
     except BackendError as e:
         log.warning("fastgame lookup failed for %s: %s", code, e)
-        await message.answer("کد کاربری پیدا نشد یا سرور در دسترس نیست. لطفاً از داخل برنامه دوباره امتحان کنید.")
+        await message.answer(
+            "کد کاربری پیدا نشد یا سرور در دسترس نیست. لطفاً از داخل برنامه دوباره امتحان کنید.", parse_mode=None
+        )
         return True
 
     shown = info["user_code"]
     await message.answer(
         f"درخواست VIP برای کد {shown} ثبت شد ✅\nبعد از تأیید ادمین، همین‌جا خبر می‌دهیم.",
+        parse_mode=None,
     )
     if not ADMIN_IDS:
         log.warning("FASTGAME_ADMIN_IDS is empty: nobody can approve VIP requests")
@@ -121,7 +124,7 @@ async def handle_start(message: Message, args: str | None) -> bool:
     text = f"درخواست VIP\nکد: {shown}\nوضعیت فعلی: {_status_text(info)}\nاز: {who}"
     for admin_id in ADMIN_IDS:
         try:
-            await message.bot.send_message(admin_id, text, reply_markup=_keyboard(code, user.id))
+            await message.bot.send_message(admin_id, text, reply_markup=_keyboard(code, user.id), parse_mode=None)
         except Exception:  # an admin who never started the bot must not block the others
             log.exception("could not notify admin %s", admin_id)
     return True
@@ -148,7 +151,7 @@ async def on_button(query: CallbackQuery) -> None:
     key, code, uid = match.group(1), match.group(2), int(match.group(3))
 
     if key == "skip":
-        await query.message.edit_text((query.message.text or "") + "\n\nرد شد ❌")
+        await query.message.edit_text((query.message.text or "") + "\n\nرد شد ❌", parse_mode=None)
         await query.answer()
         return
 
@@ -161,11 +164,12 @@ async def on_button(query: CallbackQuery) -> None:
 
     status = _status_text(info)
     await query.message.edit_text(
-        f"{(query.message.text or '').split(chr(10) + chr(10))[0]}\n\n{label} ✅\nوضعیت جدید: {status}"
+        f"{(query.message.text or '').split(chr(10) + chr(10))[0]}\n\n{label} ✅\nوضعیت جدید: {status}",
+        parse_mode=None,
     )
     await query.answer("انجام شد")
     note = "VIP شما لغو شد." if key == "cancel" else f"VIP شما فعال شد ✅\nوضعیت: {status}\nبرنامه را باز کنید؛ زمان نامحدود است."
     try:
-        await query.bot.send_message(uid, note)
+        await query.bot.send_message(uid, note, parse_mode=None)
     except Exception:
         log.exception("could not notify user %s", uid)
