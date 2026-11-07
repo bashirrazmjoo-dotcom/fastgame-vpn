@@ -5,6 +5,7 @@ import com.fastgame.vpn.data.ApiClient
 import com.fastgame.vpn.data.Backend
 import com.fastgame.vpn.data.BackendImpl
 import com.fastgame.vpn.data.DeviceId
+import com.fastgame.vpn.data.Endpoint
 import com.fastgame.vpn.data.FastGameApi
 import com.fastgame.vpn.data.Prefs
 import com.fastgame.vpn.vpn.ConnectionController
@@ -20,7 +21,16 @@ class AppContainer(app: Application) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val prefs = Prefs(app)
 
-    private val api: FastGameApi = ApiClient(BuildConfig.API_BASE_URL)
+    private val api: FastGameApi = ApiClient(
+        listOf(
+            Endpoint(BuildConfig.API_BASE_URL, ApiClient.defaultClient()),
+            Endpoint(
+                BuildConfig.API_FALLBACK_URL,
+                ApiClient.pinnedClient(BuildConfig.API_FALLBACK_CERT_SHA256),
+                BuildConfig.API_FALLBACK_HOST,
+            ),
+        ),
+    )
 
     val backend: Backend = BackendImpl(
         api = api,

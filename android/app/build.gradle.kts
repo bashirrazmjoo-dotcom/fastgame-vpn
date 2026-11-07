@@ -24,6 +24,14 @@ android {
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("int", "APP_VERSION_CODE", appVersionCode.toString())
+        // Backup route straight to the server (used when the domain cannot be reached, e.g. DNS
+        // filtering). Only the server's own certificate is accepted, matched by SHA-256 fingerprint.
+        buildConfigField("String", "API_FALLBACK_URL", "\"https://93.126.31.20:24443/\"")
+        buildConfigField("String", "API_FALLBACK_HOST", "\"fg.razmjou.com\"")
+        buildConfigField(
+            "String", "API_FALLBACK_CERT_SHA256",
+            "\"435B7DB62EB5E4DFA969EE216F935E1E8FE21F62393D5C38ACA464610796912E\"",
+        )
     }
 
     androidResources {

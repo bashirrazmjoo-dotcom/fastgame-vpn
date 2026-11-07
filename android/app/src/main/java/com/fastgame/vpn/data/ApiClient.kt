@@ -38,12 +38,19 @@ interface FastGameApi {
     suspend fun stopSession(token: String, sessionId: String): SessionState
 }
 
+/** One way of reaching the service: base URL, HTTP client and an optional Host header override. */
+class Endpoint(val baseUrl: String, val client: OkHttpClient, val hostHeader: String? = null)
+
 class ApiClient(
-    baseUrl: String,
-    private val client: OkHttpClient = defaultClient(),
+    endpoints: List<Endpoint>,
 ) : FastGameApi {
 
-    private val base = baseUrl.trimEnd('/')
+    constructor(baseUrl: String, client: OkHttpClient = defaultClient()) : this(listOf(Endpoint(baseUrl, client)))
+
+    private val routes = endpoints.map { Endpoint(it.baseUrl.trimEnd('/'), it.client, it.hostHeader) }
+
+    /** Index of the route that worked last; tried first next time. */
+    @Volatile private var preferred = 0
 
     override suspend fun config() = JSONObject(execute("/v1/config")).toAppConfig()
 
@@ -82,16 +89,30 @@ class ApiClient(
         body: JSONObject? = null,
         post: Boolean = false,
     ): String {
-        val builder = Request.Builder().url(base + path).header("Accept", "application/json")
-        if (token != null) builder.header("Authorization", "Bearer $token")
-        if (post) builder.post((body?.toString() ?: "").toRequestBody(JSON))
+        var failure: NetworkException? = null
+        val start = preferred
+        for (step in routes.indices) {
+            val index = (start + step) % routes.size
+            val route = routes[index]
+            val builder = Request.Builder().url(route.baseUrl + path).header("Accept", "application/json")
+            route.hostHeader?.let { builder.header("Host", it) }
+            if (token != null) builder.header("Authorization", "Bearer $token")
+            if (post) builder.post((body?.toString() ?: "").toRequestBody(JSON))
 
-        val response = client.newCall(builder.build()).await()
-        response.use { r ->
-            val text = r.body?.string().orEmpty()
-            if (r.isSuccessful) return text
-            throw parseError(r.code, text)
+            val response = try {
+                route.client.newCall(builder.build()).await()
+            } catch (e: NetworkException) {
+                failure = e // unreachable: try the next route
+                continue
+            }
+            preferred = index
+            response.use { r ->
+                val text = r.body?.string().orEmpty()
+                if (r.isSuccessful) return text
+                throw parseError(r.code, text)
+            }
         }
+        throw failure ?: NetworkException(IOException("no route"))
     }
 
     private fun parseError(status: Int, text: String): ApiException = try {
@@ -121,6 +142,29 @@ class ApiClient(
 
     companion object {
         private val JSON = "application/json; charset=utf-8".toMediaType()
+
+        /** Client for the direct-to-server route: trusts exactly one certificate, identified by its SHA-256. */
+        fun pinnedClient(certSha256Hex: String): OkHttpClient {
+            val expected = certSha256Hex.replace(":", "").lowercase()
+            val trust = object : javax.net.ssl.X509TrustManager {
+                override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) =
+                    throw java.security.cert.CertificateException("client certificates are not used")
+
+                override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {
+                    val leaf = chain.firstOrNull() ?: throw java.security.cert.CertificateException("empty chain")
+                    val digest = java.security.MessageDigest.getInstance("SHA-256").digest(leaf.encoded)
+                    val actual = digest.joinToString("") { "%02x".format(it) }
+                    if (actual != expected) throw java.security.cert.CertificateException("unexpected server certificate")
+                }
+
+                override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = emptyArray()
+            }
+            val ssl = javax.net.ssl.SSLContext.getInstance("TLS").apply { init(null, arrayOf(trust), null) }
+            return defaultClient().newBuilder()
+                .sslSocketFactory(ssl.socketFactory, trust)
+                .hostnameVerifier { _, _ -> true } // the pinned certificate is the identity check
+                .build()
+        }
 
         fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
