@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     privacy_policy_url: str = ""
     terms_url: str = ""
 
+    # Shared secret for the Telegram bot (same server, calls 127.0.0.1). Leave empty to disable
+    # the /bot endpoints. Use a long random value (at least 32 characters).
+    bot_api_token: str | None = None
+
     # Admin panel.
     admin_token_minutes: int = 12 * 60
     admin_bootstrap_username: str | None = None

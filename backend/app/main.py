@@ -10,7 +10,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import select, text
 
-from app.api import admin_auth, admin_devices, admin_servers, admin_stats, v1_device, v1_sessions
+from app.api import (
+    admin_auth,
+    admin_devices,
+    admin_servers,
+    admin_stats,
+    bot_api,
+    v1_device,
+    v1_sessions,
+)
 from app.core import security
 from app.core.config import get_settings
 from app.core.db import SessionLocal
@@ -112,3 +120,4 @@ app.include_router(admin_auth.router)
 app.include_router(admin_devices.router)
 app.include_router(admin_servers.router)
 app.include_router(admin_stats.router)
+app.include_router(bot_api.router)
