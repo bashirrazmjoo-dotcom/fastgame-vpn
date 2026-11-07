@@ -92,11 +92,13 @@ fun ShinyButton(
             .background(Brush.verticalGradient(listOf(Color(0xFF0B1022), Color(0xFF05070F))))
             .drawWithCache {
                 val step = 4.dp.toPx()
+                val boxW = size.width
+                val boxH = size.height
                 val dots = buildList {
                     var y = step
-                    while (y < size.height) {
+                    while (y < boxH) {
                         var x = step
-                        while (x < size.width) {
+                        while (x < boxW) {
                             add(Offset(x, y))
                             x += step
                         }
