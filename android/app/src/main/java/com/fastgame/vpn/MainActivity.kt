@@ -30,6 +30,8 @@ import com.fastgame.vpn.vpn.ConnectionService
 import com.fastgame.vpn.vpn.Phase
 import java.util.Locale
 
+private const val SUPPORT_URL = "https://t.me/fastgamevpn"
+
 class MainActivity : AppCompatActivity() {
 
     private val container get() = (application as FastGameApp).container
@@ -86,7 +88,7 @@ class MainActivity : AppCompatActivity() {
                         Toast.makeText(this, R.string.id_copied, Toast.LENGTH_SHORT).show()
                     },
                     onBuyVip = { ui.account?.let { open(it.vipPurchaseUrl) } },
-                    onSupport = { ui.config?.let { open(it.supportUrl) } },
+                    onSupport = { open(SUPPORT_URL) },
                     onPrivacy = { ui.config?.let { open(it.privacyPolicyUrl) } },
                     onToggleLanguage = {
                         val next = if (Locale.getDefault().language == "fa") "en" else "fa"

@@ -7,6 +7,8 @@
     <string name="status_connecting">در حال اتصال…</string>
     <string name="status_connected">متصل هستید</string>
     <string name="status_disconnecting">در حال قطع اتصال…</string>
+    <string name="btn_connect">اتصال</string>
+    <string name="btn_disconnect">قطع اتصال</string>
     <string name="hint_tap_to_connect">برای اتصال لمس کنید</string>
     <string name="hint_tap_to_disconnect">برای قطع اتصال لمس کنید</string>
 
@@ -18,7 +20,7 @@
     <string name="vip_unlimited">استفاده نامحدود</string>
     <string name="vip_until">فعال تا %1$s</string>
     <string name="vip_lifetime">دسترسی دائمی</string>
-    <string name="resets_in">شارژ مجدد زمان رایگان تا %1$s دیگر</string>
+    <string name="resets_in">شارژ تا %1$s دیگر</string>
 
     <string name="notice_quota_exhausted">زمان رایگان شما تمام شد.</string>
     <string name="notice_blocked">این حساب مسدود شده است. لطفاً با پشتیبانی تماس بگیرید.</string>
@@ -34,7 +36,7 @@
     <string name="id_copied">شناسه کپی شد</string>
     <string name="details_copied">کپی شد</string>
     <string name="buy_vip">خرید VIP</string>
-    <string name="support">پشتیبانی تلگرام</string>
+    <string name="support">پشتیبانی</string>
     <string name="privacy_policy">حریم خصوصی</string>
     <string name="retry">تلاش مجدد</string>
     <string name="loading">در حال بارگذاری…</string>

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -127,11 +128,6 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         ConnectButton(conn.phase, actions.onToggle)
         Spacer(Modifier.height(12.dp))
         Text(statusText(conn.phase), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text(
-            stringResource(if (conn.phase == Phase.CONNECTED) R.string.hint_tap_to_disconnect else R.string.hint_tap_to_connect),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 13.sp,
-        )
         if (conn.phase != Phase.IDLE && conn.phase != Phase.CONNECTED && !conn.detail.isNullOrBlank()) {
             Spacer(Modifier.height(6.dp))
             Text(conn.detail, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, textAlign = TextAlign.Center)
@@ -166,42 +162,42 @@ private fun statusText(phase: Phase): String = stringResource(
 @Composable
 private fun ConnectButton(phase: Phase, onClick: () -> Unit) {
     val connected = phase == Phase.CONNECTED
-    val label = stringResource(if (connected) R.string.hint_tap_to_disconnect else R.string.hint_tap_to_connect)
     val busy = phase == Phase.STARTING || phase == Phase.CONNECTING || phase == Phase.DISCONNECTING
-    Box(
-        Modifier
-            .size(176.dp)
-            .background(
-                Brush.radialGradient(listOf((if (connected) Accent else AccentViolet).copy(alpha = 0.35f), Color.Transparent)),
-                CircleShape,
-            )
-            .padding(8.dp)
-            .clip(CircleShape)
-            .background(if (connected) NeonBrush else Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x0FFFFFFF))))
-            .border(2.dp, NeonBrush, CircleShape)
-            .semantics { contentDescription = label }
-            .clickable(enabled = phase != Phase.DISCONNECTING, role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
+    val label = when {
+        busy -> statusText(phase)
+        connected -> stringResource(R.string.btn_disconnect)
+        else -> stringResource(R.string.btn_connect)
+    }
+    ShinyButton(
+        onClick = onClick,
+        enabled = phase != Phase.DISCONNECTING,
+        highlight = if (connected) Accent else AccentViolet,
+        shine = if (connected) Color.White else Color(0xFFB8A4FF),
+        contentDescription = label,
+        modifier = Modifier.fillMaxWidth(0.86f),
     ) {
         if (busy) {
-            CircularProgressIndicator(color = Accent, modifier = Modifier.size(56.dp))
+            CircularProgressIndicator(color = Accent, strokeWidth = 3.dp, modifier = Modifier.size(26.dp))
         } else {
-            PowerIcon(if (connected) Color(0xFF031A16) else Accent)
+            PowerIcon(if (connected) Accent else Color.White, 26.dp)
         }
+        Spacer(Modifier.width(12.dp))
+        Text(label, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
 @Composable
-private fun PowerIcon(color: Color) {
-    androidx.compose.foundation.Canvas(Modifier.size(64.dp)) {
-        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = 7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-        val pad = 8.dp.toPx()
+private fun PowerIcon(color: Color, size: androidx.compose.ui.unit.Dp) {
+    androidx.compose.foundation.Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = w * 0.11f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        val pad = w * 0.12f
         drawArc(
             color, startAngle = -60f, sweepAngle = 300f, useCenter = false, style = stroke,
-            topLeft = androidx.compose.ui.geometry.Offset(pad, pad + 4.dp.toPx()),
-            size = androidx.compose.ui.geometry.Size(size.width - 2 * pad, size.height - 2 * pad - 4.dp.toPx()),
+            topLeft = androidx.compose.ui.geometry.Offset(pad, pad + w * 0.06f),
+            size = androidx.compose.ui.geometry.Size(w - 2 * pad, w - 2 * pad - w * 0.06f),
         )
-        drawLine(color, androidx.compose.ui.geometry.Offset(size.width / 2, 4.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width / 2, size.height * 0.5f), 7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        drawLine(color, androidx.compose.ui.geometry.Offset(w / 2, w * 0.06f), androidx.compose.ui.geometry.Offset(w / 2, w * 0.5f), w * 0.11f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
     }
 }
 
@@ -263,12 +259,8 @@ private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>,
     val canPick = enabled && servers.size > 1
     SquareCard(modifier.clickable(enabled = canPick, role = Role.Button) { open = true }) {
         Text(stringResource(R.string.label_server), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            // A code badge instead of a flag emoji: emoji must not be used as icons.
-            Box(
-                Modifier.size(44.dp).clip(CircleShape).background(NeonBrush),
-                contentAlignment = Alignment.Center,
-            ) { Text(selected?.countryCode?.uppercase() ?: "--", color = Color(0xFF031A16), fontWeight = FontWeight.Bold) }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(flagEmoji(selected?.countryCode), fontSize = 30.sp)
             Text(
                 selected?.let { if (fa) it.countryNameFa else it.countryNameEn } ?: stringResource(R.string.choose_server),
                 fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2,
@@ -278,12 +270,18 @@ private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>,
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             servers.forEach { s ->
                 DropdownMenuItem(
-                    text = { Text("${s.countryCode.uppercase()}  ${if (fa) s.countryNameFa else s.countryNameEn} · ${s.name}") },
+                    text = { Text("${flagEmoji(s.countryCode)}  ${if (fa) s.countryNameFa else s.countryNameEn} · ${s.name}") },
                     onClick = { open = false; onSelect(s.id) },
                 )
             }
         }
     }
+}
+
+/** Regional-indicator pair for a two-letter country code (renders as a flag); empty when unknown. */
+private fun flagEmoji(code: String?): String {
+    val c = code?.uppercase()?.takeIf { it.length == 2 && it.all { ch -> ch in 'A'..'Z' } } ?: return "\uD83C\uDFF3\uFE0F"
+    return String(Character.toChars(0x1F1E6 + (c[0] - 'A'))) + String(Character.toChars(0x1F1E6 + (c[1] - 'A')))
 }
 
 @Composable
@@ -318,12 +316,16 @@ private fun TimeSquare(account: Account?, conn: ConnectionState, modifier: Modif
 
 @Composable
 private fun IdCard(code: String, actions: HomeActions) {
-    Card {
-        Text(stringResource(R.string.label_your_id), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(code, fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-            TextButton(onClick = { actions.onCopyId(code) }) { Text(stringResource(R.string.copy_id)) }
+    Row(
+        Modifier.fillMaxWidth().glass(16.dp).padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column {
+            Text(stringResource(R.string.label_your_id), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+            Text(code, fontSize = 18.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
         }
+        TextButton(onClick = { actions.onCopyId(code) }) { Text(stringResource(R.string.copy_id)) }
     }
 }
 

@@ -7,6 +7,8 @@
     <string name="status_connecting">Connecting…</string>
     <string name="status_connected">Connected</string>
     <string name="status_disconnecting">Disconnecting…</string>
+    <string name="btn_connect">Connect</string>
+    <string name="btn_disconnect">Disconnect</string>
     <string name="hint_tap_to_connect">Tap to connect</string>
     <string name="hint_tap_to_disconnect">Tap to disconnect</string>
 
@@ -18,7 +20,7 @@
     <string name="vip_unlimited">Unlimited use</string>
     <string name="vip_until">Active until %1$s</string>
     <string name="vip_lifetime">Lifetime access</string>
-    <string name="resets_in">Free time recharges in %1$s</string>
+    <string name="resets_in">Recharges in %1$s</string>
 
     <string name="notice_quota_exhausted">Your free time is used up.</string>
     <string name="notice_blocked">This account has been blocked. Please contact support.</string>
@@ -34,7 +36,7 @@
     <string name="id_copied">ID copied</string>
     <string name="details_copied">Copied</string>
     <string name="buy_vip">Buy VIP</string>
-    <string name="support">Telegram support</string>
+    <string name="support">Support</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="retry">Retry</string>
     <string name="loading">Loading…</string>

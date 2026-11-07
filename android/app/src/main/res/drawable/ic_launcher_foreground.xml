@@ -1,11 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Lightning bolt, inside the 66dp adaptive-icon safe zone. -->
+    <!-- Shield outline with a neon gradient stroke; everything stays inside the 66dp safe zone. -->
     <path
-        android:fillColor="#FF22D3EE"
-        android:pathData="M58,26 L38,58 L51,58 L46,82 L71,47 L57,47 Z" />
+        android:pathData="M54,24 L77,32 L77,53 C77,67 67.5,77 54,83 C40.5,77 31,67 31,53 L31,32 Z"
+        android:strokeWidth="3.5"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="31" android:startY="24"
+                android:endX="77" android:endY="83"
+                android:type="linear">
+                <item android:offset="0" android:color="#FF8B5CF6" />
+                <item android:offset="1" android:color="#FF38E8C6" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Lightning bolt. -->
+    <path android:pathData="M58.5,37 L44,58.5 L52.5,58.5 L49.5,72 L65,49.5 L56,49.5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="44" android:startY="37"
+                android:endX="65" android:endY="72"
+                android:type="linear">
+                <item android:offset="0" android:color="#FFFFFFFF" />
+                <item android:offset="1" android:color="#FF38E8C6" />
+            </gradient>
+        </aapt:attr>
+    </path>
 </vector>
