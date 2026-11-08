@@ -55,6 +55,8 @@ jobs:
           KEYSTORE_B64: ${{ secrets.FASTGAME_KEYSTORE_BASE64 }}
         run: |
           if [ -n "$KEYSTORE_B64" ]; then
+            CLEAN=$(printf "%s" "$KEYSTORE_B64" | tr -d "[:space:]")
+            echo "secret length: ${#CLEAN}; non-base64 chars: $(printf "%s" "$CLEAN" | tr -d "A-Za-z0-9+/=" | wc -c); starts with MII-like: $([ "${CLEAN:0:3}" = "/u3" ] && echo jks-magic || echo other)"
             printf "%s" "$KEYSTORE_B64" | tr -d "[:space:]\357\273\277" | base64 -d > "$RUNNER_TEMP/fastgame.jks"
             echo "signed=true" >> "$GITHUB_OUTPUT"
           fi
