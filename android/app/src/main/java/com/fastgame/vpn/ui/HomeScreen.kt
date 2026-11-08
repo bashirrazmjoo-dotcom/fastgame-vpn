@@ -116,6 +116,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Spacer(Modifier.height(28.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
             TextButton(onClick = actions.onToggleLanguage) { Text("فارسی / EN") }

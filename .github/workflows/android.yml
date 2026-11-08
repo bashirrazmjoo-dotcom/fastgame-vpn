@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # publish the APK as a GitHub release (phone-friendly download)
     defaults:
       run:
         working-directory: android
@@ -55,6 +57,21 @@ jobs:
           FASTGAME_KEY_ALIAS: ${{ secrets.FASTGAME_KEY_ALIAS }}
           FASTGAME_KEY_PASSWORD: ${{ secrets.FASTGAME_KEY_PASSWORD }}
         run: gradle assembleRelease bundleRelease -Pfastgame.apiBaseUrl="$API_BASE_URL"
+
+      - name: APK size breakdown
+        run: |
+          ls -l app/build/outputs/apk/*/*.apk
+          unzip -lv app/build/outputs/apk/debug/app-debug.apk | sort -k1 -n -r | head -12
+
+      - name: Publish APK to the "latest" release
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/FastGameVPN.apk"
+          gh release delete latest --cleanup-tag -y -R "$GITHUB_REPOSITORY" || true
+          gh release create latest "$RUNNER_TEMP/FastGameVPN.apk" -R "$GITHUB_REPOSITORY" \
+            --prerelease --title "Latest build" --notes "Build ${GITHUB_SHA::7} (test APK)"
 
       - uses: actions/upload-artifact@v4
         with:
