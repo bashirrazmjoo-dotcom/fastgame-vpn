@@ -74,7 +74,7 @@ fun Modifier.modernCard(corner: Dp = 16.dp): Modifier = this
         )
     }
 
-/** Button in the modern-card style for secondary actions; sinks a little when pressed. */ actions: the same liquid-glass plate as the cards, sinks a little when pressed. */
+/** Button in the modern-card style for secondary actions; sinks a little when pressed. */
 @Composable
 fun GlassButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interaction = remember { MutableInteractionSource() }
