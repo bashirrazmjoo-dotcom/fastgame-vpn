@@ -142,7 +142,17 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
             }
             GlassButton(stringResource(R.string.support), actions.onSupport, Modifier.weight(1f))
         }
-        TextButton(onClick = actions.onPrivacy) { Text(stringResource(R.string.privacy_policy)) }
+        var showLicenses by remember { mutableStateOf(false) }
+        Row(horizontalArrangement = Arrangement.Center) {
+            TextButton(onClick = actions.onPrivacy) { Text(stringResource(R.string.privacy_policy)) }
+            TextButton(onClick = { showLicenses = true }) { Text(stringResource(R.string.licenses)) }
+        }
+        if (showLicenses) AlertDialog(
+            onDismissRequest = { showLicenses = false },
+            title = { Text(stringResource(R.string.licenses)) },
+            text = { Text(stringResource(R.string.licenses_body), modifier = Modifier.verticalScroll(rememberScrollState())) },
+            confirmButton = { TextButton(onClick = { showLicenses = false }) { Text(stringResource(android.R.string.ok)) } },
+        )
         Text("build ${com.fastgame.vpn.BuildConfig.BUILD_ID}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
     }
 }

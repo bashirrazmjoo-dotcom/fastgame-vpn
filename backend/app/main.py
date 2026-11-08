@@ -16,6 +16,7 @@ from app.api import (
     admin_servers,
     admin_stats,
     bot_api,
+    legal,
     v1_device,
     v1_sessions,
 )
@@ -121,3 +122,4 @@ app.include_router(admin_devices.router)
 app.include_router(admin_servers.router)
 app.include_router(admin_stats.router)
 app.include_router(bot_api.router)
+app.include_router(legal.router)
