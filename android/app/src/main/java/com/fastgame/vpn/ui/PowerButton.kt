@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -88,8 +89,11 @@ private fun RainbowPower(tap: Modifier) {
                 val ring = size.minDimension / 2 - 22.dp.toPx()
                 val matrix = Matrix().apply { setRotate(angle.value, cx, cy) }
                 val shader = SweepGradient(cx, cy, colors, null).also { it.setLocalMatrix(matrix) }
-                // bloom: wide, faint strokes stacked outside the ring
-                drawIntoCanvas { canvas ->
+                // bloom: wide, faint strokes stacked outside the ring (kept out of the disc)
+                val disc = androidx.compose.ui.graphics.Path().apply {
+                    addOval(androidx.compose.ui.geometry.Rect(androidx.compose.ui.geometry.Offset(cx, cy), ring - 2.dp.toPx()))
+                }
+                clipPath(disc, androidx.compose.ui.graphics.ClipOp.Difference) { drawIntoCanvas { canvas ->
                     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                         style = Paint.Style.STROKE
                         this.shader = shader
@@ -102,8 +106,10 @@ private fun RainbowPower(tap: Modifier) {
                     paint.alpha = 255
                     paint.strokeWidth = 4.dp.toPx()
                     canvas.nativeCanvas.drawCircle(cx, cy, ring, paint)
-                }
-                drawCircle(Color(0xFF121213), radius = ring - 2.dp.toPx())
+                } }
+                // the disc takes the card colour (same faint fill and border as the other cards)
+                drawCircle(Color(0x0DFFFFFF), radius = ring - 2.dp.toPx())
+                drawCircle(Color(0x24FFFFFF), radius = ring - 2.dp.toPx(), style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx()))
             }
             .then(tap),
         contentAlignment = Alignment.Center,

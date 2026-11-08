@@ -77,12 +77,13 @@ class HomeActions(
 fun HomeScreen(ui: HomeUiState, conn: ConnectionState, actions: HomeActions) {
     Web3Background {
         when {
-            ui.loading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    FastLoader(Modifier.height(130.dp))
-                    Spacer(Modifier.height(12.dp))
-                    Text(stringResource(R.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+            ui.loading -> Box(Modifier.fillMaxSize()) {
+                FastLoader(Modifier.height(140.dp).align(Alignment.Center))
+                Text(
+                    stringResource(R.string.loading),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp),
+                )
             }
             ui.error != null -> ErrorView(ui.error, actions)
             else -> Content(ui, conn, actions)
@@ -127,9 +128,9 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
 
         Spacer(Modifier.height(8.dp))
         ConnectButton(conn.phase, actions.onToggle)
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(2.dp))
         Text(statusText(conn.phase), style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(10.dp))
 
         InfoRow(ui.selectedServer, ui.servers, conn.phase == Phase.IDLE, actions.onSelectServer, account, conn)
         Spacer(Modifier.height(12.dp))

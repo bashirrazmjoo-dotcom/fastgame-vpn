@@ -31,7 +31,7 @@ fun FastLoader(modifier: Modifier = Modifier.height(130.dp)) {
     val clock = rememberInfiniteTransition(label = "loader").animateFloat(
         0f, 1f, infiniteRepeatable(tween(4000, easing = LinearEasing)), label = "t",
     )
-    Canvas(modifier.aspectRatio(74f / 116f)) {
+    Canvas(modifier.aspectRatio(74f / 124f)) {
         val k = size.width / 74f
         scale(k, k, pivot = Offset.Zero) {
             val t = clock.value
@@ -39,13 +39,13 @@ fun FastLoader(modifier: Modifier = Modifier.height(130.dp)) {
                 moveTo(cx, cy - hh); lineTo(cx + hw, cy); lineTo(cx, cy + hh); lineTo(cx - hw, cy); close()
             }
             val hw = 30f; val hh = 15f; val th = 14f; val cx = 37f
-            // ghost diamond (landing spot) pulses above the stack
+            // ghost diamond (platform) pulses under the stack
             val pulse = 0.5f + 0.5f * sin(t * 2 * PI.toFloat() * 2)
-            val ghost = diamond(cx, 22f, hw, hh)
+            val ghost = diamond(cx, 108f, hw, hh)
             drawPath(ghost, Accent.copy(alpha = 0.10f + 0.18f * pulse))
             drawPath(ghost, Accent.copy(alpha = 0.35f + 0.4f * pulse), style = Stroke(1.2f))
             // three units, bottom first so upper ones draw over
-            val baseY = floatArrayOf(86f, 62f, 38f)
+            val baseY = floatArrayOf(72f, 48f, 24f)
             val tops = listOf(Color(0xFF4B5563), Color(0xFF5B6575), Color(0xFF6B7687))
             for (i in 0..2) {
                 val phase = (t * 2 - i * 0.22f)
