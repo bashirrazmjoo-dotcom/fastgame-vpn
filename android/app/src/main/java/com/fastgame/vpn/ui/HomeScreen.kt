@@ -116,7 +116,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.app_name), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
             TextButton(onClick = actions.onToggleLanguage) { Text("فارسی / EN") }
         }
         Spacer(Modifier.height(16.dp))
@@ -126,10 +126,10 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         Spacer(Modifier.height(8.dp))
         ConnectButton(conn.phase, actions.onToggle)
         Spacer(Modifier.height(12.dp))
-        Text(statusText(conn.phase), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text(statusText(conn.phase), style = MaterialTheme.typography.titleLarge)
         if (conn.phase != Phase.IDLE && conn.phase != Phase.CONNECTED && !conn.detail.isNullOrBlank()) {
             Spacer(Modifier.height(6.dp))
-            Text(conn.detail, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, textAlign = TextAlign.Center)
+            Text(conn.detail, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
         }
         Spacer(Modifier.height(20.dp))
 
@@ -144,7 +144,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
             GlassButton(stringResource(R.string.support), actions.onSupport, Modifier.weight(1f))
         }
         TextButton(onClick = actions.onPrivacy) { Text(stringResource(R.string.privacy_policy)) }
-        Text("build ${com.fastgame.vpn.BuildConfig.BUILD_ID}", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), fontSize = 11.sp)
+        Text("build ${com.fastgame.vpn.BuildConfig.BUILD_ID}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -226,7 +226,7 @@ private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>,
             val number = selected?.let { Regex("(\\d+)\\s*$").find(it.name)?.value }
             Text(
                 listOfNotNull(country, number).joinToString(" ").ifBlank { stringResource(R.string.choose_server) } + if (canPick) " \u25BE" else "",
-                fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2, textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium, maxLines = 2, textAlign = TextAlign.Center,
             )
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
@@ -248,43 +248,21 @@ private fun flagEmoji(code: String?): String {
 
 @Composable
 private fun TimeSquare(account: Account?, conn: ConnectionState, modifier: Modifier) {
-    SquareCard(modifier) {
-        if (account == null) return@SquareCard
-        if (account.isVip) {
-            Text(stringResource(R.string.label_vip), color = Accent, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            val until = account.vipExpiresAtMillis
-            if (account.vipLifetime || until == null) {
-                Gauge(1f, Modifier.weight(1f).fillMaxWidth()) {
-                    Text("\u221E", fontSize = 40.sp, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.vip_lifetime), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, textAlign = TextAlign.Center)
-                }
-            } else {
-                val leftMs = (until - System.currentTimeMillis()).coerceAtLeast(0)
-                val days = (leftMs + DAY_MS - 1) / DAY_MS
-                val hours = ((leftMs + HOUR_MS - 1) / HOUR_MS).coerceAtLeast(1)
-                Gauge((leftMs.toFloat() / (30 * DAY_MS)).coerceIn(0f, 1f), Modifier.weight(1f).fillMaxWidth()) {
-                    if (leftMs >= DAY_MS) {
-                        Text(java.text.NumberFormat.getInstance(Locale.getDefault()).format(days), fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                        Text(stringResource(R.string.unit_days), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-                    } else {
-                        Text(java.text.NumberFormat.getInstance(Locale.getDefault()).format(hours), fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                        Text(stringResource(R.string.unit_hours), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-                    }
-                }
+    Box(modifier.aspectRatio(1f).liquidGlass().padding(10.dp), contentAlignment = Alignment.Center) {
+        if (account == null) return@Box
+        val until = account.vipExpiresAtMillis
+        when {
+            account.isVip && (account.vipLifetime || until == null) ->
+                Gauge(1f, vip = true) { Text("\u221E", fontSize = 48.sp, fontWeight = FontWeight.Bold) }
+            account.isVip -> {
+                val leftMs = (until!! - System.currentTimeMillis()).coerceAtLeast(0)
+                Gauge((leftMs.toFloat() / (30 * DAY_MS)).coerceIn(0f, 1f), vip = true) { TimePair(leftMs / 1000) }
             }
-        } else {
-            val live = conn.phase != Phase.IDLE && conn.remainingSeconds != null
-            val left = if (live) conn.remainingSeconds!! else account.quota.remainingSeconds
-            val total = account.quota.totalSeconds.coerceAtLeast(1)
-            val minutes = (left.coerceAtLeast(0) + 59) / 60 // round up: never "0 min" while time is left
-            Text(stringResource(R.string.label_time_left), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-            Gauge((left.toFloat() / total).coerceIn(0f, 1f), Modifier.weight(1f).fillMaxWidth()) {
-                if (minutes >= 60) Text(stringResource(R.string.time_hours, (minutes / 60).toInt()), fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    stringResource(R.string.time_minutes, (minutes % 60).toInt()),
-                    fontSize = if (minutes >= 60) 15.sp else 20.sp,
-                    fontWeight = FontWeight.Bold,
-                )
+            else -> {
+                val live = conn.phase != Phase.IDLE && conn.remainingSeconds != null
+                val left = if (live) conn.remainingSeconds!! else account.quota.remainingSeconds
+                val total = account.quota.totalSeconds.coerceAtLeast(1)
+                Gauge((left.toFloat() / total).coerceIn(0f, 1f), vip = false) { TimePair(left) }
             }
         }
     }
@@ -293,28 +271,69 @@ private fun TimeSquare(account: Account?, conn: ConnectionState, modifier: Modif
 private const val HOUR_MS = 3_600_000L
 private const val DAY_MS = 24 * HOUR_MS
 
-/** Circular gauge: a faint track and an arc that shrinks with [fraction]; green, then amber, then rose. */
+/**
+ * Two numbers and nothing else: days and hours when a day or more is left, otherwise hours and
+ * minutes. There is no seconds counter; the numbers slide when they change (about once a minute).
+ */
 @Composable
-private fun Gauge(fraction: Float, modifier: Modifier = Modifier, center: @Composable ColumnScope.() -> Unit) {
+private fun TimePair(totalSeconds: Long) {
+    val s = totalSeconds.coerceAtLeast(0)
+    val minutes = (s + 59) / 60 // round up: never 00:00 while time is left
+    val (first, second) = if (minutes >= 24 * 60) (minutes / (24 * 60)) to ((minutes % (24 * 60)) / 60) else (minutes / 60) to (minutes % 60)
+    val locale = Locale.getDefault()
+    // digits always read left to right, also in the Persian layout
+    androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AnimatedNumber(String.format(locale, "%02d", first))
+            Text(":", style = TimeTextStyle, modifier = Modifier.padding(horizontal = 2.dp))
+            AnimatedNumber(String.format(locale, "%02d", second))
+        }
+    }
+}
+
+private val TimeTextStyle = androidx.compose.ui.text.TextStyle(
+    fontSize = 30.sp,
+    lineHeight = 36.sp,
+    fontWeight = FontWeight.Bold,
+    fontFeatureSettings = "tnum",
+)
+
+@Composable
+private fun AnimatedNumber(text: String) {
+    androidx.compose.animation.AnimatedContent(
+        targetState = text,
+        transitionSpec = {
+            (androidx.compose.animation.slideInVertically { it / 2 } + androidx.compose.animation.fadeIn()) togetherWith
+                (androidx.compose.animation.slideOutVertically { -it / 2 } + androidx.compose.animation.fadeOut())
+        },
+        label = "time-number",
+    ) { value -> Text(value, style = TimeTextStyle, maxLines = 1, softWrap = false) }
+}
+
+/** Circular gauge filling its box: a faint track and an arc that shrinks counter-clockwise as time runs out. */
+@Composable
+private fun Gauge(fraction: Float, vip: Boolean, center: @Composable () -> Unit) {
     val color = when {
+        vip -> Accent
         fraction > 0.66f -> Color(0xFF10B981)
         fraction > 0.33f -> Color(0xFFF59E0B)
         else -> Color(0xFFF43F5E)
     }
-    Box(modifier, contentAlignment = Alignment.Center) {
-        androidx.compose.foundation.Canvas(Modifier.fillMaxSize().padding(2.dp)) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
             val side = minOf(size.width, size.height)
-            val stroke = 8.dp.toPx()
+            val stroke = 10.dp.toPx()
             val topLeft = androidx.compose.ui.geometry.Offset((size.width - side) / 2 + stroke / 2, (size.height - side) / 2 + stroke / 2)
             val arcSize = androidx.compose.ui.geometry.Size(side - stroke, side - stroke)
-            val cap = androidx.compose.ui.graphics.StrokeCap.Round
             drawArc(Color(0x26FFFFFF), 0f, 360f, false, topLeft, arcSize, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
             if (fraction > 0f) {
-                // starts at 12 o'clock and the remaining part is drawn counter-clockwise
-                drawArc(color, -90f, -360f * fraction, false, topLeft, arcSize, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke, cap = cap))
+                drawArc(
+                    color, -90f, -360f * fraction, false, topLeft, arcSize,
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round),
+                )
             }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, content = center)
+        center()
     }
 }
 
@@ -326,8 +345,8 @@ private fun IdCard(code: String, actions: HomeActions) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column {
-            Text(stringResource(R.string.label_your_id), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
-            Text(code, fontSize = 18.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+            Text(stringResource(R.string.label_your_id), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
+            Text(code, style = MaterialTheme.typography.titleMedium, letterSpacing = 2.sp)
         }
         TextButton(onClick = { actions.onCopyId(code) }) { Text(stringResource(R.string.copy_id)) }
     }

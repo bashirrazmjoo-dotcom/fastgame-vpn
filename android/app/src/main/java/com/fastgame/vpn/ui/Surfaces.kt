@@ -74,6 +74,6 @@ fun GlassButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifie
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = Color(0xFFEAF0FF), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+        Text(label, color = Color(0xFFEAF0FF), style = androidx.compose.material3.MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
     }
 }
