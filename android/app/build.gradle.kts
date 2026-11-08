@@ -13,6 +13,7 @@ val keystorePath: String? = System.getenv("FASTGAME_KEYSTORE_PATH")
 android {
     namespace = "com.fastgame.vpn"
     compileSdk = 37
+    ndkVersion = "30.0.14904198" // same as :ics-main so native libraries are stripped
 
     defaultConfig {
         // The application id can never change after the first upload to Google Play.
