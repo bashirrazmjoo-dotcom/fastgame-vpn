@@ -66,7 +66,10 @@ jobs:
           FASTGAME_KEYSTORE_PASSWORD: ${{ secrets.FASTGAME_KEYSTORE_PASSWORD }}
           FASTGAME_KEY_ALIAS: ${{ secrets.FASTGAME_KEY_ALIAS }}
           FASTGAME_KEY_PASSWORD: ${{ secrets.FASTGAME_KEY_PASSWORD }}
-        run: gradle assembleRelease bundleRelease -Pfastgame.apiBaseUrl="$API_BASE_URL"
+        run: |
+          gradle assembleRelease bundleRelease -Pfastgame.apiBaseUrl="$API_BASE_URL"
+          mkdir -p "$RUNNER_TEMP/stable"
+          cp app/build/outputs/apk/release/*.apk "$RUNNER_TEMP/stable/FastGameVPN.apk"
 
 
       - name: APK size breakdown
@@ -82,7 +85,12 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/FastGameVPN.apk"
           gh release delete latest --cleanup-tag -y -R "$GITHUB_REPOSITORY" || true
           gh release create latest "$RUNNER_TEMP"/FastGameVPN*.apk -R "$GITHUB_REPOSITORY" \
-            --prerelease --title "Latest build" --notes "Build ${GITHUB_SHA::7} (test APK)"
+            --prerelease --title "Latest build" --notes "Build ${GITHUB_SHA::7} (test APKs, public debug key)"
+          if [ -f "$RUNNER_TEMP/stable/FastGameVPN.apk" ]; then
+            gh release delete stable --cleanup-tag -y -R "$GITHUB_REPOSITORY" || true
+            gh release create stable "$RUNNER_TEMP/stable/FastGameVPN.apk" -R "$GITHUB_REPOSITORY" \
+              --title "FastGame VPN (signed release)" --notes "Build ${GITHUB_SHA::7}, signed with the release key."
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
