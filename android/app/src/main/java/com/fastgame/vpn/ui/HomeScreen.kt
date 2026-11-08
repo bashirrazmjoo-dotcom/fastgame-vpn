@@ -209,9 +209,9 @@ private fun SquareCard(modifier: Modifier = Modifier, content: @Composable Colum
 
 @Composable
 private fun InfoRow(server: VpnServerInfo?, servers: List<VpnServerInfo>, enabled: Boolean, onSelect: (Int) -> Unit, account: Account?, conn: ConnectionState) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        ServerSquare(server, servers, enabled, onSelect, Modifier.weight(1f))
-        TimeSquare(account, conn, Modifier.weight(1f))
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        ServerSquare(server, servers, enabled, onSelect, Modifier.fillMaxWidth())
+        TimeCountdown(account, conn, Modifier.fillMaxWidth())
     }
 }
 
@@ -220,10 +220,10 @@ private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>,
     var open by remember { mutableStateOf(false) }
     val fa = Locale.getDefault().language == "fa"
     val canPick = enabled && servers.size > 1
-    SquareCard(modifier.clickable(enabled = canPick, role = Role.Button) { open = true }) {
-        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(flagEmoji(selected?.countryCode), fontSize = 52.sp)
-            Spacer(Modifier.height(8.dp))
+    Box(modifier.liquidGlass(22.dp).clickable(enabled = canPick, role = Role.Button) { open = true }.padding(horizontal = 18.dp, vertical = 14.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+            Text(flagEmoji(selected?.countryCode), fontSize = 36.sp)
+            Spacer(Modifier.width(12.dp))
             val country = selected?.let { if (fa) it.countryNameFa else it.countryNameEn }
             val number = selected?.let { Regex("(\\d+)\\s*$").find(it.name)?.value }
             Text(
@@ -248,54 +248,66 @@ private fun flagEmoji(code: String?): String {
     return String(Character.toChars(0x1F1E6 + (c[0] - 'A'))) + String(Character.toChars(0x1F1E6 + (c[1] - 'A')))
 }
 
-@Composable
-private fun TimeSquare(account: Account?, conn: ConnectionState, modifier: Modifier) {
-    Box(modifier.aspectRatio(1f).liquidGlass().padding(10.dp), contentAlignment = Alignment.Center) {
-        if (account == null) return@Box
-        val until = account.vipExpiresAtMillis
-        when {
-            account.isVip && (account.vipLifetime || until == null) ->
-                Gauge(1f, vip = true) { Text("\u221E", fontSize = 48.sp, fontWeight = FontWeight.Bold) }
-            account.isVip -> {
-                val leftMs = (until!! - System.currentTimeMillis()).coerceAtLeast(0)
-                Gauge((leftMs.toFloat() / (30 * DAY_MS)).coerceIn(0f, 1f), vip = true) { TimePair(leftMs / 1000) }
-            }
-            else -> {
-                val live = conn.phase != Phase.IDLE && conn.remainingSeconds != null
-                val left = if (live) conn.remainingSeconds!! else account.quota.remainingSeconds
-                val total = account.quota.totalSeconds.coerceAtLeast(1)
-                Gauge((left.toFloat() / total).coerceIn(0f, 1f), vip = false) { TimePair(left) }
-            }
-        }
-    }
-}
-
 private const val HOUR_MS = 3_600_000L
 private const val DAY_MS = 24 * HOUR_MS
 
 /**
- * Two numbers and nothing else: days and hours when a day or more is left, otherwise hours and
- * minutes. There is no seconds counter; the numbers slide when they change (about once a minute).
+ * Remaining time as four glass tiles (days, hours, minutes, seconds) whose numbers slide and blur
+ * when they change. The seconds tick locally every second; the server stays the source of truth
+ * (the base value is refreshed on every heartbeat / account refresh).
  */
 @Composable
-private fun TimePair(totalSeconds: Long) {
-    val s = totalSeconds.coerceAtLeast(0)
-    val minutes = (s + 59) / 60 // round up: never 00:00 while time is left
-    val (first, second) = if (minutes >= 24 * 60) (minutes / (24 * 60)) to ((minutes % (24 * 60)) / 60) else (minutes / 60) to (minutes % 60)
+private fun TimeCountdown(account: Account?, conn: ConnectionState, modifier: Modifier) {
+    if (account == null) return
+    val until = account.vipExpiresAtMillis
+    val unlimited = account.isVip && (account.vipLifetime || until == null)
+    val live = conn.phase != Phase.IDLE && conn.remainingSeconds != null
+    val freeLeft = if (live) conn.remainingSeconds!! else account.quota.remainingSeconds
+
+    // Base value + the moment it arrived; the tick below only moves the display between refreshes.
+    val base = if (account.isVip && !unlimited) ((until!! - System.currentTimeMillis()) / 1000).coerceAtLeast(0) else freeLeft
+    val ticking = account.isVip || live
+    var left by remember(base, ticking) { mutableStateOf(base.coerceAtLeast(0)) }
+    androidx.compose.runtime.LaunchedEffect(base, ticking) {
+        if (!ticking) return@LaunchedEffect
+        val start = System.nanoTime()
+        while (true) {
+            kotlinx.coroutines.delay(1000)
+            left = (base - (System.nanoTime() - start) / 1_000_000_000L).coerceAtLeast(0)
+        }
+    }
+
     val locale = Locale.getDefault()
-    // digits always read left to right, also in the Persian layout
+    val labels = listOf(R.string.unit_days, R.string.unit_hours, R.string.unit_minutes, R.string.unit_seconds)
+    val values = if (unlimited) null else listOf(left / 86400, (left % 86400) / 3600, (left % 3600) / 60, left % 60)
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AnimatedNumber(String.format(locale, "%02d", first))
-            Text(":", style = TimeTextStyle, modifier = Modifier.padding(horizontal = 2.dp))
-            AnimatedNumber(String.format(locale, "%02d", second))
+        Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            for (i in 0..3) {
+                Column(
+                    Modifier.weight(1f).liquidGlass(16.dp).padding(vertical = 14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    if (values == null) {
+                        Text("\u221E", style = TimeTextStyle, color = Accent)
+                    } else {
+                        AnimatedNumber(String.format(locale, "%02d", values[i]))
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        stringResource(labels[i]),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
+                }
+            }
         }
     }
 }
 
 private val TimeTextStyle = androidx.compose.ui.text.TextStyle(
-    fontSize = 30.sp,
-    lineHeight = 36.sp,
+    fontSize = 26.sp,
+    lineHeight = 32.sp,
     fontWeight = FontWeight.Bold,
     fontFeatureSettings = "tnum",
 )
@@ -311,33 +323,6 @@ private fun AnimatedNumber(text: String) {
         },
         label = "time-number",
     ) { value -> Text(value, style = TimeTextStyle, maxLines = 1, softWrap = false) }
-}
-
-/** Circular gauge filling its box: a faint track and an arc that shrinks counter-clockwise as time runs out. */
-@Composable
-private fun Gauge(fraction: Float, vip: Boolean, center: @Composable () -> Unit) {
-    val color = when {
-        vip -> Accent
-        fraction > 0.66f -> Color(0xFF10B981)
-        fraction > 0.33f -> Color(0xFFF59E0B)
-        else -> Color(0xFFF43F5E)
-    }
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
-            val side = minOf(size.width, size.height)
-            val stroke = 10.dp.toPx()
-            val topLeft = androidx.compose.ui.geometry.Offset((size.width - side) / 2 + stroke / 2, (size.height - side) / 2 + stroke / 2)
-            val arcSize = androidx.compose.ui.geometry.Size(side - stroke, side - stroke)
-            drawArc(Color(0x26FFFFFF), 0f, 360f, false, topLeft, arcSize, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
-            if (fraction > 0f) {
-                drawArc(
-                    color, -90f, -360f * fraction, false, topLeft, arcSize,
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round),
-                )
-            }
-        }
-        center()
-    }
 }
 
 @Composable

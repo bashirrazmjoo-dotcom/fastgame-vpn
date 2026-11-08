@@ -19,6 +19,8 @@
     <string name="time_minutes">%1$d دقیقه</string>
     <string name="unit_days">روز</string>
     <string name="unit_hours">ساعت</string>
+    <string name="unit_minutes">دقیقه</string>
+    <string name="unit_seconds">ثانیه</string>
     <string name="free_plan_note">%1$d دقیقه استفاده رایگان در هر ۲۴ ساعت</string>
     <string name="label_vip">VIP</string>
     <string name="vip_unlimited">استفاده نامحدود</string>
