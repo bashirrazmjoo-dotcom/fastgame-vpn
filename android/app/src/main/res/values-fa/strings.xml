@@ -15,7 +15,10 @@
     <string name="label_server">سرور</string>
     <string name="choose_server">انتخاب سرور</string>
     <string name="label_time_left">زمان باقی‌مانده</string>
-    <string name="per_24h">در هر ۲۴ ساعت</string>
+    <string name="time_hours">%1$d ساعت</string>
+    <string name="time_minutes">%1$d دقیقه</string>
+    <string name="unit_days">روز</string>
+    <string name="unit_hours">ساعت</string>
     <string name="free_plan_note">%1$d دقیقه استفاده رایگان در هر ۲۴ ساعت</string>
     <string name="label_vip">VIP</string>
     <string name="vip_unlimited">استفاده نامحدود</string>
