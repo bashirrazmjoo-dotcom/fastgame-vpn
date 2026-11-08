@@ -41,6 +41,14 @@ android {
     }
 
     signingConfigs {
+        // A fixed, public debug key: every CI build is signed the same way, so builds install over each
+        // other (no uninstall needed) and ANDROID_ID stays the same. Release builds use the real key below.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (keystorePath != null) {
             create("release") {
                 storeFile = file(keystorePath)

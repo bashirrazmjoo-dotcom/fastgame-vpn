@@ -4,6 +4,7 @@ import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -303,8 +304,9 @@ private fun AnimatedNumber(text: String) {
     androidx.compose.animation.AnimatedContent(
         targetState = text,
         transitionSpec = {
-            (androidx.compose.animation.slideInVertically { it / 2 } + androidx.compose.animation.fadeIn()) togetherWith
-                (androidx.compose.animation.slideOutVertically { -it / 2 } + androidx.compose.animation.fadeOut())
+            (androidx.compose.animation.slideInVertically { it / 2 } + androidx.compose.animation.fadeIn()).togetherWith(
+                androidx.compose.animation.slideOutVertically { -it / 2 } + androidx.compose.animation.fadeOut(),
+            )
         },
         label = "time-number",
     ) { value -> Text(value, style = TimeTextStyle, maxLines = 1, softWrap = false) }
