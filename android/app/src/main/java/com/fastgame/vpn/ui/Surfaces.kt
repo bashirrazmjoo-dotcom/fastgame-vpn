@@ -57,7 +57,24 @@ fun Modifier.liquidGlass(corner: Dp = 22.dp): Modifier = this
         )
     }
 
-/** Glass button for secondary actions: the same liquid-glass plate as the cards, sinks a little when pressed. */
+/**
+ * Flat "modern" card (not glass): a faint raised fill, a thin border and a hairline accent light
+ * running along the top edge.
+ */
+fun Modifier.modernCard(corner: Dp = 16.dp): Modifier = this
+    .clip(RoundedCornerShape(corner))
+    .drawBehind {
+        val r = CornerRadius(corner.toPx())
+        drawRoundRect(Color(0x0AFFFFFF), cornerRadius = r)
+        drawRoundRect(Color(0x24FFFFFF), cornerRadius = r, style = Stroke(1.dp.toPx()))
+        val inset = corner.toPx()
+        drawLine(
+            Brush.horizontalGradient(listOf(Color.Transparent, Accent.copy(alpha = 0.6f), Color.Transparent), startX = inset, endX = size.width - inset),
+            Offset(inset, 0.5.dp.toPx()), Offset(size.width - inset, 0.5.dp.toPx()), 1.dp.toPx(),
+        )
+    }
+
+/** Button in the modern-card style for secondary actions; sinks a little when pressed. */ actions: the same liquid-glass plate as the cards, sinks a little when pressed. */
 @Composable
 fun GlassButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interaction = remember { MutableInteractionSource() }
@@ -70,7 +87,7 @@ fun GlassButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifie
                 scaleX = s
                 scaleY = s
             }
-            .liquidGlass(16.dp)
+            .modernCard(16.dp)
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

@@ -129,10 +129,6 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         ConnectButton(conn.phase, actions.onToggle)
         Spacer(Modifier.height(12.dp))
         Text(statusText(conn.phase), style = MaterialTheme.typography.titleLarge)
-        if (conn.phase != Phase.IDLE && conn.phase != Phase.CONNECTED && !conn.detail.isNullOrBlank()) {
-            Spacer(Modifier.height(6.dp))
-            Text(conn.detail, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-        }
         Spacer(Modifier.height(20.dp))
 
         InfoRow(ui.selectedServer, ui.servers, conn.phase == Phase.IDLE, actions.onSelectServer, account, conn)
@@ -154,7 +150,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
 private fun statusText(phase: Phase): String = stringResource(
     when (phase) {
         Phase.IDLE -> R.string.status_disconnected
-        Phase.STARTING -> R.string.status_starting
+        Phase.STARTING -> R.string.status_connecting
         Phase.CONNECTING -> R.string.status_connecting
         Phase.CONNECTED -> R.string.status_connected
         Phase.DISCONNECTING -> R.string.status_disconnecting
@@ -220,7 +216,7 @@ private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>,
     var open by remember { mutableStateOf(false) }
     val fa = Locale.getDefault().language == "fa"
     val canPick = enabled && servers.size > 1
-    Box(modifier.liquidGlass(22.dp).clickable(enabled = canPick, role = Role.Button) { open = true }.padding(horizontal = 18.dp, vertical = 14.dp)) {
+    Box(modifier.modernCard(16.dp).clickable(enabled = canPick, role = Role.Button) { open = true }.padding(horizontal = 18.dp, vertical = 14.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Text(flagEmoji(selected?.countryCode), fontSize = 36.sp)
             Spacer(Modifier.width(12.dp))
@@ -284,7 +280,7 @@ private fun TimeCountdown(account: Account?, conn: ConnectionState, modifier: Mo
         Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (i in 0..3) {
                 Column(
-                    Modifier.weight(1f).liquidGlass(16.dp).padding(vertical = 14.dp),
+                    Modifier.weight(1f).modernCard(16.dp).padding(vertical = 14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     if (values == null) {
@@ -328,7 +324,7 @@ private fun AnimatedNumber(text: String) {
 @Composable
 private fun IdCard(code: String, actions: HomeActions) {
     Row(
-        Modifier.fillMaxWidth().liquidGlass(16.dp).padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+        Modifier.fillMaxWidth().modernCard(16.dp).padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

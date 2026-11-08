@@ -66,7 +66,7 @@ fun CopyPill(onCopy: () -> Unit, modifier: Modifier = Modifier) {
             .width(104.dp)
             .size(width = 104.dp, height = 40.dp)
             .clip(CircleShape)
-            .liquidGlass(20.dp)
+            .modernCard(20.dp)
             .drawBehind { drawRect(fill, size = Size(size.width * progress.value, size.height)) }
             .clickable(role = Role.Button, enabled = swap.value == 0f) { onCopy(); run += 1 },
         contentAlignment = Alignment.Center,
