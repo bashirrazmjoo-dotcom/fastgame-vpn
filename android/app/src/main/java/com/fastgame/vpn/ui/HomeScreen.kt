@@ -79,7 +79,7 @@ fun HomeScreen(ui: HomeUiState, conn: ConnectionState, actions: HomeActions) {
         when {
             ui.loading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    FastLoader(Modifier.size(120.dp))
+                    FastLoader(Modifier.height(130.dp))
                     Spacer(Modifier.height(12.dp))
                     Text(stringResource(R.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -342,15 +342,20 @@ private fun Gauge(fraction: Float, vip: Boolean, center: @Composable () -> Unit)
 @Composable
 private fun IdCard(code: String, actions: HomeActions) {
     Row(
-        Modifier.fillMaxWidth().liquidGlass(16.dp).padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+        Modifier.fillMaxWidth().liquidGlass(16.dp).padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
-            Text(stringResource(R.string.label_your_id), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
-            Text(code, style = MaterialTheme.typography.titleMedium, letterSpacing = 2.sp)
+        androidx.compose.foundation.layout.Box(Modifier.weight(1f)) {
+            Text(
+                "ID:$code",
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.semantics { contentDescription = "ID $code" },
+            )
         }
-        TextButton(onClick = { actions.onCopyId(code) }) { Text(stringResource(R.string.copy_id)) }
+        CopyPill(onCopy = { actions.onCopyId(code) })
     }
 }
 

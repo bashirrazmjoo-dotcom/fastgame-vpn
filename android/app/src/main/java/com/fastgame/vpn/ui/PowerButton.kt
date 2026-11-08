@@ -55,18 +55,17 @@ fun PowerButton(
 
 @Composable
 private fun QuietPower(busy: Boolean, tap: Modifier) {
-    Box(
-        Modifier
-            .size(176.dp)
-            .background(Brush.radialGradient(listOf(AccentViolet.copy(alpha = 0.35f), Color.Transparent)), CircleShape)
-            .padding(8.dp)
-            .clip(CircleShape)
-            .background(Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x0FFFFFFF))))
-            .border(2.dp, NeonBrush, CircleShape)
-            .then(tap),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (busy) CircularProgressIndicator(color = Accent, modifier = Modifier.size(56.dp)) else PowerGlyph(Accent, 64.dp)
+    // Same footprint as the connected button: 176 dp box, 136 dp disc (= rainbow ring + half stroke).
+    Box(Modifier.size(176.dp), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier
+                .size(136.dp)
+                .liquidGlass(68.dp)
+                .then(tap),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (busy) CircularProgressIndicator(color = Accent, modifier = Modifier.size(56.dp)) else PowerGlyph(Accent, 64.dp)
+        }
     }
 }
 
