@@ -144,8 +144,8 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         }
         var showLicenses by remember { mutableStateOf(false) }
         Row(horizontalArrangement = Arrangement.Center) {
-            TextButton(onClick = actions.onPrivacy) { Text(stringResource(R.string.privacy_policy)) }
-            TextButton(onClick = { showLicenses = true }) { Text(stringResource(R.string.licenses)) }
+            TextButton(onClick = actions.onPrivacy) { Text(stringResource(R.string.privacy_policy), maxLines = 1, softWrap = false) }
+            TextButton(onClick = { showLicenses = true }) { Text(stringResource(R.string.licenses), maxLines = 1, softWrap = false) }
         }
         if (showLicenses) AlertDialog(
             onDismissRequest = { showLicenses = false },
