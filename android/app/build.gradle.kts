@@ -24,6 +24,8 @@ android {
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("int", "APP_VERSION_CODE", appVersionCode.toString())
+        // Short commit id (set by CI) so it is easy to tell which build is installed.
+        buildConfigField("String", "BUILD_ID", "\"${System.getenv("GITHUB_SHA")?.take(7) ?: "dev"}\"")
         // Backup route straight to the server (used when the domain cannot be reached, e.g. DNS
         // filtering). Only the server's own certificate is accepted, matched by SHA-256 fingerprint.
         buildConfigField("String", "API_FALLBACK_URL", "\"https://93.126.31.20:24443/\"")

@@ -57,31 +57,11 @@ fun Modifier.liquidGlass(corner: Dp = 22.dp): Modifier = this
         )
     }
 
-/**
- * Brushed-metal button: a dark base with slow diagonal bands of light, a faint red/blue colour
- * fringe on the rim and a bright top edge. The sheen drifts slowly and the button sinks a little
- * when pressed.
- */
+/** Glass button for secondary actions: the same liquid-glass plate as the cards, sinks a little when pressed. */
 @Composable
-fun MetallicButton(
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    baseColor: Color = Color(0xFF222417),
-) {
-    val transition = rememberInfiniteTransition(label = "metal")
-    val phase = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(7000, easing = LinearEasing)),
-        label = "phase",
-    )
+fun GlassButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val shape = RoundedCornerShape(14.dp)
-    val mid = Color(0xFF494B3A)
-    val bands = listOf(baseColor, mid, Color(0xFFF2F2EA), mid, baseColor, Color(0xFF3A3C2D), baseColor)
-
     Box(
         modifier
             .height(52.dp)
@@ -90,38 +70,10 @@ fun MetallicButton(
                 scaleX = s
                 scaleY = s
             }
-            .clip(shape)
-            .drawBehind {
-                val tile = size.width * 1.1f
-                val x0 = phase.value * tile
-                drawRect(
-                    Brush.linearGradient(
-                        colors = bands,
-                        start = Offset(x0, 0f),
-                        end = Offset(x0 + tile, tile),
-                        tileMode = TileMode.Repeated,
-                    ),
-                )
-                val r = CornerRadius(14.dp.toPx())
-                val fringe = 1.dp.toPx()
-                drawRoundRect(Color(0x4DFF3B3B), Offset(-fringe, 0f), cornerRadius = r, style = Stroke(fringe))
-                drawRoundRect(Color(0x4D3B6BFF), Offset(fringe, 0f), cornerRadius = r, style = Stroke(fringe))
-                drawRoundRect(
-                    Brush.verticalGradient(listOf(Color(0x99FFFFFF), Color(0x00FFFFFF), Color(0x33000000))),
-                    cornerRadius = r,
-                    style = Stroke(1.5.dp.toPx()),
-                )
-            }
+            .liquidGlass(16.dp)
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            label,
-            color = Color(0xFFFAFAF5),
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-            style = TextStyle(shadow = androidx.compose.ui.graphics.Shadow(Color(0xCC000000), Offset(0f, -1f), 1f)),
-        )
+        Text(label, color = Color(0xFFEAF0FF), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
     }
 }
