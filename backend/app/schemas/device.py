@@ -25,6 +25,8 @@ class ConfigResponse(BaseModel):
     support_telegram_username: str
     support_url: str
     min_supported_version_code: int
+    latest_version_code: int
+    update_url: str
     privacy_policy_url: str
     terms_url: str
 

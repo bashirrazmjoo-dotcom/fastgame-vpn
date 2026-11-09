@@ -63,6 +63,8 @@ def test_public_config(client):
     assert cfg["free_quota_seconds"] == 7200
     assert cfg["cycle_seconds"] == 86400
     assert cfg["support_telegram_username"] == "fastgamevpn_bot"
+    assert cfg["latest_version_code"] == 0
+    assert cfg["update_url"].endswith("/FastGameVPN.apk")
 
 
 def test_servers_list_hides_profile(api):

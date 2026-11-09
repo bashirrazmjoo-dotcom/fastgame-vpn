@@ -88,6 +88,7 @@ class MainActivity : AppCompatActivity() {
                     },
                     onBuyVip = { ui.account?.let { openInCustomTab(it.vipPurchaseUrl) } },
                     onSupport = { open(SUPPORT_URL) },
+                    onUpdate = { ui.config?.updateUrl?.takeIf { it.isNotBlank() }?.let { open(it) } },
                     onPrivacy = { ui.config?.let { open(it.privacyPolicyUrl) } },
                     onToggleLanguage = {
                         val next = if (Locale.getDefault().language == "fa") "en" else "fa"

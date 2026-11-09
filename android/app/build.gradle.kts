@@ -3,7 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val appVersionCode = 1
+// CI numbers every build (100 + run number) so a newer build always installs over an older one.
+val appVersionCode = System.getenv("FASTGAME_VERSION_CODE")?.toIntOrNull()?.plus(100) ?: 1
 val appVersionName = "1.0.0"
 val apiBaseUrl: String = providers.gradleProperty("fastgame.apiBaseUrl").get()
 

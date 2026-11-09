@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     # "Buy VIP" opens this page (the user logs in there with Telegram or SMS, then buys).
     vip_purchase_base_url: str = "https://app.razmjou.com/"
     min_supported_version_code: int = 1
+    # Newest app version. Read from the GitHub release notes ("versionCode: N") when
+    # ``update_check_url`` is set; ``latest_version_code`` is the manual fallback / override.
+    latest_version_code: int = 0
+    update_check_url: str = "https://api.github.com/repos/bashirrazmjoo-dotcom/fastgame-vpn/releases/tags/stable"
+    update_download_url: str = "https://github.com/bashirrazmjoo-dotcom/fastgame-vpn/releases/download/stable/FastGameVPN.apk"
     privacy_policy_url: str = ""
     terms_url: str = ""
 

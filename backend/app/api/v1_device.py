@@ -20,7 +20,7 @@ from app.schemas.device import (
     RegisterResponse,
     ServerOut,
 )
-from app.services import devices, quota
+from app.services import devices, quota, updates
 
 router = APIRouter(prefix="/v1", tags=["app"])
 
@@ -48,6 +48,8 @@ def get_config() -> ConfigResponse:
         support_telegram_username=s.support_telegram_username,
         support_url=_telegram_url(),
         min_supported_version_code=s.min_supported_version_code,
+        latest_version_code=updates.latest_version_code(),
+        update_url=s.update_download_url,
         privacy_policy_url=s.privacy_policy_url,
         terms_url=s.terms_url,
     )

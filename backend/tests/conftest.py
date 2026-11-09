@@ -9,6 +9,7 @@ from pathlib import Path
 TEST_DB = "fastgame_test"
 os.environ["FG_SECRET_KEY"] = "test-secret-key-for-fastgame-0123456789"
 os.environ["FG_ENV"] = "development"
+os.environ["FG_UPDATE_CHECK_URL"] = ""  # tests never call GitHub
 os.environ["FG_DATABASE_URL"] = f"postgresql+psycopg://fastgame:fastgame@127.0.0.1:5432/{TEST_DB}"
 for _name in ("FG_ADMIN_BOOTSTRAP_USERNAME", "FG_ADMIN_BOOTSTRAP_PASSWORD"):
     os.environ.pop(_name, None)

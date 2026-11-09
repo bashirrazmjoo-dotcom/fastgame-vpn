@@ -16,6 +16,7 @@ jobs:
         working-directory: android
     env:
       API_BASE_URL: ${{ vars.API_BASE_URL || 'https://fg.razmjou.com/' }}
+      FASTGAME_VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -89,7 +90,9 @@ jobs:
           if [ -f "$RUNNER_TEMP/stable/FastGameVPN.apk" ]; then
             gh release delete stable --cleanup-tag -y -R "$GITHUB_REPOSITORY" || true
             gh release create stable "$RUNNER_TEMP/stable/FastGameVPN.apk" -R "$GITHUB_REPOSITORY" \
-              --title "FastGame VPN (signed release)" --notes "Build ${GITHUB_SHA::7}, signed with the release key."
+              --title "FastGame VPN (signed release)" --notes "Build ${GITHUB_SHA::7}, signed with the release key.
+
+versionCode: $((100 + GITHUB_RUN_NUMBER))"
           fi
 
       - uses: actions/upload-artifact@v4

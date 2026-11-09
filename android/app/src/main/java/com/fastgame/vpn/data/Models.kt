@@ -32,6 +32,8 @@ data class AppConfig(
     val heartbeatIntervalSeconds: Int,
     val supportUrl: String,
     val minSupportedVersionCode: Int,
+    val latestVersionCode: Int,
+    val updateUrl: String,
     val privacyPolicyUrl: String,
 )
 
@@ -96,6 +98,8 @@ internal fun JSONObject.toAppConfig() = AppConfig(
     heartbeatIntervalSeconds = getInt("heartbeat_interval_seconds"),
     supportUrl = getString("support_url"),
     minSupportedVersionCode = getInt("min_supported_version_code"),
+    latestVersionCode = optInt("latest_version_code", 0),
+    updateUrl = optString("update_url", ""),
     privacyPolicyUrl = getString("privacy_policy_url"),
 )
 
