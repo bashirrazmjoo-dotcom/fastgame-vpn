@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # for ``session_timeout_seconds`` is closed by the reaper.
     heartbeat_interval_seconds: int = 30
     heartbeat_grace_seconds: int = 45
-    session_timeout_seconds: int = 120
+    session_timeout_seconds: int = 300
     reaper_interval_seconds: int = 30
 
     # Public information returned to the app.

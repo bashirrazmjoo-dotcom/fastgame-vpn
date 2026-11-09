@@ -97,9 +97,39 @@ class ConnectionController(
         _state.update { if (it.phase == Phase.IDLE) it.copy(notice = null) else it }
     }
 
+    /**
+     * Keeps the VPN up until the user disconnects: when a session ends for any reason other than
+     * the quota or a block, a new one is started after a short back-off. The phase shows
+     * "connecting" meanwhile; a notice is only raised when we give up.
+     */
     private suspend fun runSession(server: VpnServerInfo) {
+        var failures = 0
+        var finalNotice: Notice? = null
+        try {
+            while (true) {
+                val outcome = runOnce(server)
+                val notice = outcome.notice
+                if (notice is Notice.QuotaExhausted || notice is Notice.Blocked) { finalNotice = notice; return }
+                failures = if (outcome.wasConnected) 0 else failures + 1
+                val offline = notice is Notice.NetworkLost
+                if (!offline && failures >= MAX_FAILED_ATTEMPTS) { finalNotice = notice; return }
+                _state.value = ConnectionState(phase = Phase.STARTING, serverId = server.id, remainingSeconds = _state.value.remainingSeconds, isVip = _state.value.isVip)
+                delay(backoffMillis(failures))
+            }
+        } finally {
+            withContext(NonCancellable) {
+                _state.value = ConnectionState(phase = Phase.IDLE, serverId = server.id, notice = finalNotice)
+            }
+        }
+    }
+
+    private class Outcome(val notice: Notice, val wasConnected: Boolean)
+
+    /** One session: start, tunnel, heartbeat. Returns why it ended; a cancellation (user) is rethrown. */
+    private suspend fun runOnce(server: VpnServerInfo): Outcome {
         var sessionId: String? = null
-        var notice: Notice? = null
+        var connected = false
+        var notice: Notice
         try {
             val started = backend.startSession(server.id)
             sessionId = started.sessionId
@@ -112,10 +142,13 @@ class ConnectionController(
                     "Timed out while connecting." + engine.diagnostics().let { if (it.isBlank()) "" else "\n$it" },
                 )
 
-            notice = evaluate(backend.confirmConnected(started.sessionId))
-            if (notice == null) {
+            val first = evaluate(backend.confirmConnected(started.sessionId))
+            if (first == null) {
+                connected = true
                 _state.update { it.copy(phase = Phase.CONNECTED) }
                 notice = monitor(started.sessionId, started.heartbeatIntervalSeconds)
+            } else {
+                notice = first
             }
         } catch (e: CancellationException) {
             throw e // the user pressed disconnect
@@ -132,9 +165,17 @@ class ConnectionController(
                 runCatching { engine.disconnect() }
                 sessionId?.let { id -> runCatching { backend.stopSession(id) } }
                 anchorRemaining = null
-                _state.value = ConnectionState(phase = Phase.IDLE, serverId = server.id, notice = notice)
             }
         }
+        return Outcome(notice, connected)
+    }
+
+    private fun backoffMillis(failures: Int): Long = when {
+        failures <= 0 -> 1_500L
+        failures == 1 -> 3_000L
+        failures == 2 -> 6_000L
+        failures == 3 -> 12_000L
+        else -> 25_000L
     }
 
     /** Heartbeat loop. Returns the reason the session has to end (it never returns normally). */
@@ -208,5 +249,6 @@ class ConnectionController(
         const val CONNECT_TIMEOUT_MS = 90_000L
         const val NETWORK_GRACE_MS = 180_000L
         const val MIN_HEARTBEAT_SECONDS = 5
+        const val MAX_FAILED_ATTEMPTS = 6
     }
 }

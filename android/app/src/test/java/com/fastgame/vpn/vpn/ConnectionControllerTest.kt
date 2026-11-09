@@ -90,22 +90,47 @@ class ConnectionControllerTest {
         assertEquals(1, b.stops); assertEquals(1, e.disconnects)
     }
 
-    @Test fun engineFailureEndsSession() = runTest {
+    @Test fun repeatedEngineFailuresEventuallyGiveUp() = runTest {
         val b = FakeBackend(); val e = FakeEngine().apply { connectError = EngineException("boom") }
         val c = controller(b, e)
         c.connect(server); runCurrent()
+        assertEquals(Phase.STARTING, c.state.value.phase) // retrying, no notice yet
+        assertNull(c.state.value.notice)
+        advanceTimeBy(200_000); runCurrent()
         assertEquals(Phase.IDLE, c.state.value.phase)
         assertEquals(Notice.EngineFailed("boom"), c.state.value.notice)
-        assertEquals(1, b.stops)
+        assertEquals(6, b.stops)
     }
 
-    @Test fun tunnelDropIsDetected() = runTest {
+    @Test fun tunnelDropReconnectsByItself() = runTest {
         val b = FakeBackend(); val e = FakeEngine(); val c = controller(b, e)
         c.connect(server); runCurrent()
         e.s.value = EngineState.Disconnected
         advanceTimeBy(2_000); runCurrent()
-        assertEquals(Notice.ConnectionLost, c.state.value.notice)
+        assertEquals(Phase.STARTING, c.state.value.phase)
+        advanceTimeBy(5_000); runCurrent()
+        assertEquals(Phase.CONNECTED, c.state.value.phase) // a second session is up
+        assertEquals(1, b.stops)
+        c.disconnect(); runCurrent()
         assertEquals(Phase.IDLE, c.state.value.phase)
+        assertNull(c.state.value.notice)
+        assertEquals(2, b.stops)
+    }
+
+    @Test fun serverClosedSessionReconnects() = runTest {
+        var closed = true
+        val b = FakeBackend().apply {
+            heartbeatState = {
+                if (closed) { closed = false; SessionState(SessionStatus.CLOSED, false, 50, null) }
+                else SessionState(SessionStatus.ACTIVE, false, 50, null)
+            }
+        }
+        val c = controller(b, FakeEngine())
+        c.connect(server); advanceTimeBy(12_000); runCurrent()
+        advanceTimeBy(5_000); runCurrent()
+        assertEquals(Phase.CONNECTED, c.state.value.phase)
+        c.disconnect(); runCurrent()
+        assertNull(c.state.value.notice)
     }
 
     @Test fun secondConnectIsRejected() = runTest {
