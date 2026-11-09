@@ -28,12 +28,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Keeps the heartbeat loop alive while the VPN is connected. -->
-        <service
-            android:name=".vpn.ConnectionService"
-            android:exported="false"
-            android:foregroundServiceType="systemExempted" />
-
         <!-- Stores the in-app language choice on Android < 13. -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

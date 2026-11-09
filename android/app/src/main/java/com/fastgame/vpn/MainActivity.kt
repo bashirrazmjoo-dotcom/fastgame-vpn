@@ -26,7 +26,6 @@ import com.fastgame.vpn.ui.FastGameTheme
 import com.fastgame.vpn.ui.HomeActions
 import com.fastgame.vpn.ui.HomeScreen
 import com.fastgame.vpn.ui.MainViewModel
-import com.fastgame.vpn.vpn.ConnectionService
 import com.fastgame.vpn.vpn.Phase
 import java.util.Locale
 
@@ -48,9 +47,9 @@ class MainActivity : AppCompatActivity() {
                 val conn by vm.connection.collectAsStateWithLifecycle()
 
                 fun startService() {
-                    if (vm.startConnection()) {
-                        ContextCompat.startForegroundService(this, Intent(this, ConnectionService::class.java))
-                    }
+                    // The OpenVPN engine runs as the foreground VPN service (one "connected" notification)
+                    // and keeps the process, and with it the heartbeat loop, alive.
+                    vm.startConnection()
                 }
 
                 val vpnPermission = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
