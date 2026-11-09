@@ -47,7 +47,7 @@ def test_me_requires_valid_token(api, client):
     assert r.json()["error"]["code"] == "invalid_token"
 
 
-def test_me_initial_state_and_telegram_link(api):
+def test_me_initial_state_and_vip_purchase_link(api):
     dev = api.register()
     me = api.me(dev).json()
     assert me["is_vip"] is False and me["is_blocked"] is False
@@ -55,7 +55,7 @@ def test_me_initial_state_and_telegram_link(api):
     assert me["quota"]["remaining_seconds"] == 7200
     assert me["quota"]["resets_at"] is None  # the cycle starts at the first connection
     code = dev.code.replace("-", "")
-    assert me["vip_purchase_url"] == f"https://t.me/fastgamevpn_bot?start=fg_{code}"
+    assert me["vip_purchase_url"] == f"https://app.razmjou.com/?page=vip&code={code}"
 
 
 def test_public_config(client):

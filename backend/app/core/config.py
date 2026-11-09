@@ -31,6 +31,8 @@ class Settings(BaseSettings):
 
     # Public information returned to the app.
     support_telegram_username: str = "fastgamevpn_bot"
+    # "Buy VIP" opens this page (the user logs in there with Telegram or SMS, then buys).
+    vip_purchase_base_url: str = "https://app.razmjou.com/"
     min_supported_version_code: int = 1
     privacy_policy_url: str = ""
     terms_url: str = ""

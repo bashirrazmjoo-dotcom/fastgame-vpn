@@ -32,6 +32,12 @@ def _telegram_url(user_code: str | None = None) -> str:
     return base
 
 
+def _vip_purchase_url(user_code: str) -> str:
+    """Web page where the user logs in (Telegram or SMS) and buys VIP for this user code."""
+    base = get_settings().vip_purchase_base_url
+    return f"{base}?page=vip&code={security.strip_user_code(user_code)}"
+
+
 @router.get("/config", response_model=ConfigResponse)
 def get_config() -> ConfigResponse:
     s = get_settings()
@@ -82,7 +88,7 @@ def me(device: Device = Depends(get_current_device), db: Session = Depends(get_d
             resets_at=snap.resets_at,
         ),
         active_session_id=active_id,
-        vip_purchase_url=_telegram_url(device.user_code),
+        vip_purchase_url=_vip_purchase_url(device.user_code),
         server_time=now,
     )
 

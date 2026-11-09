@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity() {
                         getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("FastGame ID", code))
                         Toast.makeText(this, R.string.id_copied, Toast.LENGTH_SHORT).show()
                     },
-                    onBuyVip = { ui.account?.let { open(it.vipPurchaseUrl) } },
+                    onBuyVip = { ui.account?.let { openInCustomTab(it.vipPurchaseUrl) } },
                     onSupport = { open(SUPPORT_URL) },
                     onPrivacy = { ui.config?.let { open(it.privacyPolicyUrl) } },
                     onToggleLanguage = {
@@ -101,6 +101,12 @@ class MainActivity : AppCompatActivity() {
                 HomeScreen(ui, conn, actions)
             }
         }
+    }
+
+    /** Opens the page in a Chrome Custom Tab (falls back to the default browser). */
+    private fun openInCustomTab(url: String) {
+        runCatching { androidx.browser.customtabs.CustomTabsIntent.Builder().build().launchUrl(this, Uri.parse(url)) }
+            .onFailure { open(url) }
     }
 
     private fun open(url: String) {
