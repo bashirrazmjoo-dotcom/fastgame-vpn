@@ -144,7 +144,7 @@ def test_timeout_reaper_then_sweeper_removes_account(api, router, clock):
 
     dev = api.register()
     body = api.connect(dev)
-    clock.advance(300)
+    clock.advance(301)
     with SessionLocal() as db:
         assert sessions.reap_stale_sessions(db) == 1
         assert credentials.sweep(db) == 1

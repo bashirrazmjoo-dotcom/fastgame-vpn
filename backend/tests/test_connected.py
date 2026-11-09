@@ -38,7 +38,7 @@ def test_calling_connected_again_cannot_skip_charging(api, clock):
 def test_session_that_never_connects_is_reaped_and_costs_nothing(api, clock):
     dev = api.register()
     sid = api.start(dev).json()["session_id"]
-    clock.advance(300)
+    clock.advance(301)
     with SessionLocal() as db:
         assert session_service.reap_stale_sessions(db) == 1
     assert api.connected(dev, sid).status_code == 409

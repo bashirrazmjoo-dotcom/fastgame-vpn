@@ -89,10 +89,9 @@ jobs:
             --prerelease --title "Latest build" --notes "Build ${GITHUB_SHA::7} (test APKs, public debug key)"
           if [ -f "$RUNNER_TEMP/stable/FastGameVPN.apk" ]; then
             gh release delete stable --cleanup-tag -y -R "$GITHUB_REPOSITORY" || true
+            NOTES="Build ${GITHUB_SHA::7}, signed with the release key. versionCode: $((100 + GITHUB_RUN_NUMBER))"
             gh release create stable "$RUNNER_TEMP/stable/FastGameVPN.apk" -R "$GITHUB_REPOSITORY" \
-              --title "FastGame VPN (signed release)" --notes "Build ${GITHUB_SHA::7}, signed with the release key.
-
-versionCode: $((100 + GITHUB_RUN_NUMBER))"
+              --title "FastGame VPN (signed release)" --notes "$NOTES"
           fi
 
       - uses: actions/upload-artifact@v4

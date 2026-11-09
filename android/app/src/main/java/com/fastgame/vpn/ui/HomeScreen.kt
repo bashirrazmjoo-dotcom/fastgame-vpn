@@ -142,7 +142,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
                 GlassButton(stringResource(R.string.buy_vip), actions.onBuyVip, Modifier.weight(1f))
             }
             // Support only while the app is up to date; otherwise the same slot offers the update.
-            val outdated = ui.config?.let { it.latestVersionCode > BuildConfig.APP_VERSION_CODE && it.updateUrl.isNotBlank() } == true
+            val outdated = ui.config?.let { it.latestVersionCode > com.fastgame.vpn.BuildConfig.APP_VERSION_CODE && it.updateUrl.isNotBlank() } == true
             if (outdated) {
                 GlassButton("\u26A0\uFE0F " + stringResource(R.string.update_app), actions.onUpdate, Modifier.weight(1f))
             } else {

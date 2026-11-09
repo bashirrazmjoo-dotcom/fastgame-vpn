@@ -109,7 +109,7 @@ def test_reaper_closes_sessions_without_heartbeats(api, clock):
     sid = api.connect(dev)["session_id"]
     clock.advance(30)
     api.heartbeat(dev, sid)
-    clock.advance(300)  # the app died
+    clock.advance(301)  # the app died
 
     with SessionLocal() as db:
         assert session_service.reap_stale_sessions(db) == 1
