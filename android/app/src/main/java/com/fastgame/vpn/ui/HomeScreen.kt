@@ -134,6 +134,14 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         Spacer(Modifier.height(10.dp))
 
         InfoRow(ui.selectedServer, ui.servers, conn.phase == Phase.IDLE, actions.onSelectServer, account, conn)
+        val freeLeft = if (conn.phase != Phase.IDLE && conn.remainingSeconds != null) conn.remainingSeconds!! else account?.quota?.remainingSeconds ?: 1L
+        if (account != null && !account.isVip && freeLeft <= 0L) {
+            Spacer(Modifier.height(12.dp))
+            ScrambleText(
+                stringResource(R.string.free_time_over), Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                persian = Locale.getDefault().language == "fa",
+            )
+        }
         Spacer(Modifier.height(12.dp))
         if (account != null) IdCard(account.userCode, actions)
         Spacer(Modifier.height(12.dp))

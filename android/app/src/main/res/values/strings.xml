@@ -64,4 +64,5 @@
     <string name="licenses">Licenses</string>
     <string name="licenses_body">FastGame VPN is free software released under the GNU GPL v2 (see the project page for the source code).\n\n• OpenVPN and ics-openvpn (Arne Schwabe and contributors) – GNU GPL v2, https://github.com/schwabe/ics-openvpn\n• Vazirmatn font – SIL Open Font License 1.1, https://github.com/rastikerdar/vazirmatn\n• Android Jetpack and Compose, Kotlin, kotlinx.coroutines, OkHttp – Apache License 2.0\n• mbed TLS, OpenSSL, lz4, asio, fmt – their respective licenses, bundled with the OpenVPN engine\n\nSource: https://github.com/bashirrazmjoo-dotcom/fastgame-vpn</string>
     <string name="update_app">Update</string>
+    <string name="free_time_over">Free trial has ended! Get a VIP subscription to continue.</string>
 </resources>
