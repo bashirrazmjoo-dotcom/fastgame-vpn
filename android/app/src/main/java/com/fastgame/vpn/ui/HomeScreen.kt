@@ -231,33 +231,14 @@ private fun InfoRow(server: VpnServerInfo?, servers: List<VpnServerInfo>, enable
 
 @Composable
 private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>, enabled: Boolean, onSelect: (Int) -> Unit, modifier: Modifier) {
-    var open by remember { mutableStateOf(false) }
-    val fa = Locale.getDefault().language == "fa"
-    val canPick = enabled && servers.size > 1
-    Box(modifier.modernCard(16.dp).clickable(enabled = canPick, role = Role.Button) { open = true }.padding(horizontal = 18.dp, vertical = 14.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Text(flagEmoji(selected?.countryCode), fontSize = 36.sp)
-            Spacer(Modifier.width(12.dp))
-            val country = selected?.let { if (fa) it.countryNameFa else it.countryNameEn }
-            val number = selected?.let { Regex("(\\d+)\\s*$").find(it.name)?.value }
-            Text(
-                listOfNotNull(country, number).joinToString(" ").ifBlank { stringResource(R.string.choose_server) } + if (canPick) " \u25BE" else "",
-                style = MaterialTheme.typography.titleMedium, maxLines = 2, textAlign = TextAlign.Center,
-            )
-        }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            servers.forEach { s ->
-                DropdownMenuItem(
-                    text = { Text("${flagEmoji(s.countryCode)}  ${if (fa) s.countryNameFa else s.countryNameEn} · ${s.name}") },
-                    onClick = { open = false; onSelect(s.id) },
-                )
-            }
-        }
-    }
+    LiquidServerMenu(
+        selected = selected, servers = servers, canPick = enabled && servers.size > 1,
+        emptyLabel = stringResource(R.string.choose_server), onSelect = onSelect, modifier = modifier,
+    )
 }
 
 /** Regional-indicator pair for a two-letter country code (renders as a flag); empty when unknown. */
-private fun flagEmoji(code: String?): String {
+internal fun flagEmoji(code: String?): String {
     val c = code?.uppercase()?.takeIf { it.length == 2 && it.all { ch -> ch in 'A'..'Z' } } ?: return "\uD83C\uDFF3\uFE0F"
     return String(Character.toChars(0x1F1E6 + (c[0] - 'A'))) + String(Character.toChars(0x1F1E6 + (c[1] - 'A')))
 }
