@@ -120,7 +120,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
     ) {
         Spacer(Modifier.height(28.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
+            LiquidTitle(stringResource(R.string.app_name))
             TextButton(onClick = actions.onToggleLanguage) { Text("فارسی / EN") }
         }
         Spacer(Modifier.height(16.dp))
@@ -150,7 +150,8 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
             }
         }
         var showLicenses by remember { mutableStateOf(false) }
-        Row(horizontalArrangement = Arrangement.Center) {
+        Spacer(Modifier.height(20.dp))
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = actions.onPrivacy) { Text(stringResource(R.string.privacy_policy), maxLines = 1, softWrap = false) }
             TextButton(onClick = { showLicenses = true }) { Text(stringResource(R.string.licenses), maxLines = 1, softWrap = false) }
         }
