@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from app.services import ovpn
 
@@ -150,8 +150,9 @@ class ServerIn(BaseModel):
 
     @field_validator("ovpn_config")
     @classmethod
-    def _check_profile(cls, value: str) -> str:
-        ovpn.check_profile(value)
+    def _check_profile(cls, value: str, info: ValidationInfo) -> str:
+        if info.data.get("kind") != "xray":  # xray servers store a vless:// template instead
+            ovpn.check_profile(value)
         return value
 
 
