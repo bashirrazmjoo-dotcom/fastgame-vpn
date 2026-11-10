@@ -18,6 +18,7 @@ export type DeviceDetail = Device & { sessions: SessionRow[]; vip_events: VipEve
 export type DeviceList = { items: Device[]; total: number; limit: number; offset: number };
 export type Server = {
   id: number; name: string; country_code: string; country_name_en: string; country_name_fa: string;
+  kind: "openvpn" | "xray"; xui: { url: string; username: string; inbound_id: number | null } | null;
   host: string; port: number; proto: string; ovpn_config: string; auth_username: string | null;
   has_credentials: boolean; mikrotik: { api_url: string; username: string; ppp_profile: string | null; has_ca: boolean } | null; is_active: boolean; sort_order: number; created_at: string; active_connections: number;
 };
@@ -25,6 +26,8 @@ export type ServerInput = {
   name: string; country_code: string; country_name_en: string; country_name_fa: string;
   ovpn_config: string; auth_username?: string | null; auth_password?: string | null;
   clear_credentials?: boolean; clear_mikrotik?: boolean;
+  kind?: "openvpn" | "xray";
+  xui?: { url: string; username: string; password?: string | null; inbound_id: number } | null;
   mikrotik?: { api_url: string; username: string; password?: string | null; ppp_profile: string; ca_pem?: string | null } | null;
   is_active: boolean; sort_order: number;
 };

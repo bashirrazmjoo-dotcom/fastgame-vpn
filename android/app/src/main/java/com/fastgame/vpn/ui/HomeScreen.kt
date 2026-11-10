@@ -160,7 +160,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
             text = { Text(stringResource(R.string.licenses_body), modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = { TextButton(onClick = { showLicenses = false }) { Text(stringResource(android.R.string.ok)) } },
         )
-        Text("build ${com.fastgame.vpn.BuildConfig.BUILD_ID}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+        Text("v${com.fastgame.vpn.BuildConfig.APP_VERSION_CODE} · build ${com.fastgame.vpn.BuildConfig.BUILD_ID}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
     }
 }
 
