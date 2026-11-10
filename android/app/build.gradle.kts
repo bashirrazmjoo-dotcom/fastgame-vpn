@@ -1,3 +1,8 @@
+import java.security.MessageDigest
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -95,24 +100,24 @@ android {
 val xrayVersion = "v26.9.30"
 val xraySha256 = "cf71680b776b9ca583747ba652f816b047a655eab875d8951e6141636d88bbd6"
 val xrayAar = layout.projectDirectory.file("libs/libv2ray.aar").asFile
-val fetchXrayCore by tasks.registering {
+val fetchXrayCore = tasks.register("fetchXrayCore") {
     outputs.file(xrayAar)
     onlyIf { !xrayAar.exists() }
     doLast {
         val tmp = File(temporaryDir, "libv2ray-full.aar")
         uri("https://github.com/2dust/AndroidLibXrayLite/releases/download/$xrayVersion/libv2ray.aar").toURL().openStream()
             .use { input -> tmp.outputStream().use { input.copyTo(it) } }
-        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        val digest = MessageDigest.getInstance("SHA-256")
             .digest(tmp.readBytes()).joinToString("") { "%02x".format(it) }
         check(digest == xraySha256) { "libv2ray.aar checksum mismatch: $digest" }
         xrayAar.parentFile.mkdirs()
-        java.util.zip.ZipFile(tmp).use { zip ->
-            java.util.zip.ZipOutputStream(xrayAar.outputStream()).use { out ->
+        ZipFile(tmp).use { zip ->
+            ZipOutputStream(xrayAar.outputStream()).use { out ->
                 for (entry in zip.entries()) {
                     val n = entry.name
                     val drop = n.startsWith("assets/") || (n.startsWith("jni/") && !n.startsWith("jni/arm64-v8a/"))
                     if (drop) continue
-                    out.putNextEntry(java.util.zip.ZipEntry(n))
+                    out.putNextEntry(ZipEntry(n))
                     zip.getInputStream(entry).use { it.copyTo(out) }
                     out.closeEntry()
                 }
