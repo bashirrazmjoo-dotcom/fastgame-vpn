@@ -47,9 +47,9 @@ import com.fastgame.vpn.data.VpnServerInfo
 import java.util.Locale
 
 private val LiquidEase = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
-private val Yellow = Color(0xFFFFE862)
-private val Ink = Color(0xFF242424)
-private val Paper = Color(0xFFF7F1ED)
+private val MenuYellow = Color(0xFFFFE862)
+private val MenuInk = Color(0xFF242424)
+private val MenuPaper = Color(0xFFF7F1ED)
 
 private const val BAR_DP = 60
 private const val ITEM_DP = 40
@@ -90,13 +90,13 @@ internal fun LiquidServerMenu(
             .fillMaxWidth()
             .height(height)
             .clip(RoundedCornerShape(radius))
-            .background(Yellow)
+            .background(MenuYellow)
             .drawBehind {
                 // Oval of 200% x 200%, centred horizontally; its bottom edge moves from 300% up to 120% of the height.
                 val w = size.width
                 val h = size.height
                 val bottom = h * (3f - 1.8f * rise)
-                drawOval(Ink, topLeft = Offset(-w / 2f, bottom - 2f * h), size = Size(2f * w, 2f * h))
+                drawOval(MenuInk, topLeft = Offset(-w / 2f, bottom - 2f * h), size = Size(2f * w, 2f * h))
             },
     ) {
         Column(Modifier.fillMaxWidth()) {
@@ -132,7 +132,7 @@ internal fun LiquidServerMenu(
                         Spacer(Modifier.width(10.dp))
                         Text(
                             serverLabel(s, fa),
-                            color = if (chosen) Yellow else Paper,
+                            color = if (chosen) MenuYellow else MenuPaper,
                             fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
                         )
                     }
@@ -149,7 +149,7 @@ internal fun LiquidServerMenu(
                     .padding(horizontal = 22.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val ink = if (isOpen) Paper else Ink
+                val ink = if (isOpen) MenuPaper else MenuInk
                 Text(flagEmoji(selected?.countryCode), fontSize = 26.sp)
                 Spacer(Modifier.width(12.dp))
                 Text(
