@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.fastgame.vpn.data.VpnServerInfo
 import java.util.Locale
 
-private val Ease = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
+private val LiquidEase = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
 private val Yellow = Color(0xFFFFE862)
 private val Ink = Color(0xFF242424)
 private val Paper = Color(0xFFF7F1ED)
@@ -79,10 +79,10 @@ internal fun LiquidServerMenu(
     val listDp = shown * ITEM_DP + (shown - 1) * GAP_DP + 28
     val height by animateDpAsState(
         if (isOpen) (BAR_DP + listDp).dp else BAR_DP.dp,
-        tween(if (isOpen) 800 else 600, easing = Ease), label = "h",
+        tween(if (isOpen) 800 else 600, easing = LiquidEase), label = "h",
     )
-    val radius by animateDpAsState(if (isOpen) 28.dp else 72.dp, tween(800, easing = Ease), label = "r")
-    val rise by animateFloatAsState(if (isOpen) 1f else 0f, tween(800, delayMillis = if (isOpen) 100 else 0, easing = Ease), label = "rise")
+    val radius by animateDpAsState(if (isOpen) 28.dp else 72.dp, tween(800, easing = LiquidEase), label = "r")
+    val rise by animateFloatAsState(if (isOpen) 1f else 0f, tween(800, delayMillis = if (isOpen) 100 else 0, easing = LiquidEase), label = "rise")
     val scrollState = rememberScrollState()
 
     Box(
@@ -112,7 +112,7 @@ internal fun LiquidServerMenu(
                 servers.forEachIndexed { i, s ->
                     val a = remember { Animatable(0f) }
                     LaunchedEffect(isOpen) {
-                        if (isOpen) a.animateTo(1f, tween(400, delayMillis = 400 + 80 * i, easing = Ease)) else a.snapTo(0f)
+                        if (isOpen) a.animateTo(1f, tween(400, delayMillis = 400 + 80 * i, easing = LiquidEase)) else a.snapTo(0f)
                     }
                     val chosen = s.id == selected?.id
                     Row(
@@ -165,8 +165,8 @@ internal fun LiquidServerMenu(
 
 @Composable
 private fun Burger(open: Boolean, color: Color) {
-    val rot by animateFloatAsState(if (open) 45f else 0f, tween(400, easing = Ease), label = "rot")
-    val off by animateDpAsState(if (open) 0.dp else 3.dp, tween(400, easing = Ease), label = "off")
+    val rot by animateFloatAsState(if (open) 45f else 0f, tween(400, easing = LiquidEase), label = "rot")
+    val off by animateDpAsState(if (open) 0.dp else 3.dp, tween(400, easing = LiquidEase), label = "off")
     Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
         Box(Modifier.padding(bottom = off * 2).size(18.dp, 2.dp).rotate(rot).background(color, RoundedCornerShape(1.dp)))
         Box(Modifier.padding(top = off * 2).size(18.dp, 2.dp).rotate(-rot).background(color, RoundedCornerShape(1.dp)))
