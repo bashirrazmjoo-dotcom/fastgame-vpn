@@ -31,7 +31,7 @@ import kotlin.math.sin
  * gradient, with two waves and a few bubbles drifting through it.
  */
 @Composable
-fun LiquidTitle(text: String, modifier: Modifier = Modifier, size: Int = 34) {
+fun LiquidTitle(text: String, modifier: Modifier = Modifier, titleSize: Int = 34) {
     val t = rememberInfiniteTransition(label = "liquid")
     val phase by t.animateFloat(0f, 1f, infiniteRepeatable(tween(3200, easing = LinearEasing), RepeatMode.Restart), label = "p1")
     val phase2 by t.animateFloat(0f, 1f, infiniteRepeatable(tween(4800, easing = LinearEasing), RepeatMode.Restart), label = "p2")
@@ -39,7 +39,7 @@ fun LiquidTitle(text: String, modifier: Modifier = Modifier, size: Int = 34) {
 
     Text(
         text,
-        style = TextStyle(fontFamily = AppFont, fontSize = size.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
+        style = TextStyle(fontFamily = AppFont, fontSize = titleSize.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
         color = Color.White,
         modifier = modifier
             .padding(vertical = 2.dp)
