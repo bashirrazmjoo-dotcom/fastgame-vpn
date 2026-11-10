@@ -40,6 +40,14 @@ class VpnServer(Base):
     mt_ppp_profile: Mapped[str | None] = mapped_column(String(64))
     mt_ca_pem: Mapped[str | None] = mapped_column(Text)  # pinned (self-signed) certificate, public part
 
+    # "openvpn" (profile in ovpn_config) or "xray" (ovpn_config holds a vless:// link template with
+    # a {uuid} placeholder). Xray servers get a short-lived client per session in a 3x-ui inbound.
+    kind: Mapped[str] = mapped_column(String(16), default="openvpn", server_default=text("'openvpn'"))
+    xui_url: Mapped[str | None] = mapped_column(String(255))  # https://host:port/basePath/
+    xui_user: Mapped[str | None] = mapped_column(String(64))
+    xui_password_enc: Mapped[str | None] = mapped_column(Text)
+    xui_inbound_id: Mapped[int | None] = mapped_column(Integer)
+
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
     sort_order: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

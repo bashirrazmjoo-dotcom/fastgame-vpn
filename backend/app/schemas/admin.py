@@ -105,7 +105,25 @@ class MikrotikOut(BaseModel):
     has_ca: bool
 
 
+class XuiIn(BaseModel):
+    """3x-ui panel access for Xray servers. The password is write-only and stored encrypted."""
+
+    url: str = Field(pattern=r"^https://[^\s/]+(:\d{1,5})?(/[^\s]*)?$", max_length=255)  # incl. web base path
+    username: str = Field(min_length=1, max_length=64)
+    password: str | None = Field(default=None, max_length=256)  # omit on update to keep the stored one
+    inbound_id: int = Field(ge=1)
+
+
+class XuiOut(BaseModel):
+    url: str
+    username: str
+    inbound_id: int | None
+
+
 class ServerIn(BaseModel):
+    kind: Literal["openvpn", "xray"] = "openvpn"
+    # Xray servers: ovpn_config is a vless:// link template containing {uuid}.
+    xui: XuiIn | None = None
     name: str = Field(min_length=1, max_length=64)
     country_code: str = Field(pattern=r"^[A-Za-z]{2}$")
     country_name_en: str = Field(min_length=1, max_length=64)
@@ -139,6 +157,8 @@ class ServerIn(BaseModel):
 
 class ServerAdminOut(BaseModel):
     id: int
+    kind: str
+    xui: XuiOut | None = None
     name: str
     country_code: str
     country_name_en: str

@@ -16,7 +16,9 @@ class StartSessionResponse(BaseModel):
     is_vip: bool
     remaining_seconds: int | None  # None = unlimited (VIP)
     resets_at: datetime | None
-    ovpn_config: str
+    kind: Literal["openvpn", "xray"] = "openvpn"
+    ovpn_config: str  # empty for xray servers
+    xray_link: str | None = None  # vless:// link of this session's client (xray servers)
     auth_username: str | None
     auth_password: str | None
 

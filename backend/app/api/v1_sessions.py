@@ -13,7 +13,7 @@ from app.core.config import get_settings
 from app.models.device import Device
 from app.schemas.session import SessionStateResponse, StartSessionRequest, StartSessionResponse
 from app.core.errors import ApiError
-from app.services import credentials, mikrotik, sessions
+from app.services import credentials, sessions, xui
 
 log = logging.getLogger("uvicorn.error")
 router = APIRouter(prefix="/v1/sessions", tags=["app"])
@@ -41,10 +41,10 @@ def start(
         remaining = None if result.vip else int(result.snapshot.remaining_seconds)
         try:
             username, password = credentials.issue(db, server, result.session, remaining)
-        except mikrotik.MikrotikError as e:
+        except credentials.ProvisionError as e:
             log.warning("router account for server %s could not be created: %s", server.id, e)
             raise ApiError(503, "server_unavailable", "This server is not available. Try another one.") from None
-    elif server.auth_password_enc:
+    elif server.auth_password_enc and not credentials.is_xray(server):
         password = security.decrypt_secret(server.auth_password_enc)
     return StartSessionResponse(
         session_id=result.session.id,
@@ -53,7 +53,9 @@ def start(
         is_vip=result.vip,
         remaining_seconds=None if result.vip else result.snapshot.remaining_seconds,
         resets_at=None if result.vip else result.snapshot.resets_at,
-        ovpn_config=server.ovpn_config,
+        kind=server.kind,
+        ovpn_config="" if credentials.is_xray(server) else server.ovpn_config,
+        xray_link=xui.build_link(server, result.session.id) if credentials.is_xray(server) else None,
         auth_username=username,
         auth_password=password,
     )

@@ -3,14 +3,14 @@
 import logging
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core import clock, security
 from app.models.device import Device
 from app.models.server import VpnServer
 from app.models.session import VpnSession
-from app.services import mikrotik, sessions
+from app.services import mikrotik, sessions, xui
 
 log = logging.getLogger(__name__)
 
@@ -19,8 +19,16 @@ UPTIME_SLACK_SECONDS = 60
 SWEEP_BATCH = 50
 
 
+ProvisionError = (mikrotik.MikrotikError, xui.XuiError)
+
+
+def is_xray(server: VpnServer) -> bool:
+    return server.kind == "xray"
+
+
 def uses_router_accounts(server: VpnServer) -> bool:
-    return bool(server.mt_api_url)
+    """True when every session gets its own account (MikroTik secret or 3x-ui client)."""
+    return bool(server.mt_api_url) or is_xray(server)
 
 
 def issue(db: Session, server: VpnServer, session: VpnSession, remaining_seconds: int | None):
@@ -28,11 +36,18 @@ def issue(db: Session, server: VpnServer, session: VpnSession, remaining_seconds
 
     On failure the session is closed without charge and the error is raised to the caller.
     """
-    username, password = security.session_credentials(session.id)
     limit = None if remaining_seconds is None else max(1, remaining_seconds) + UPTIME_SLACK_SECONDS
+    if is_xray(server):
+        username, password = xui.client_id(session.id), None
+    else:
+        username, password = security.session_credentials(session.id)
     try:
-        mikrotik.create_account(server, username, password, limit_uptime_seconds=limit)
-    except mikrotik.MikrotikError:
+        if is_xray(server):
+            # the panel expires the client itself if the backend ever fails to revoke it
+            xui.add_client(server, session.id, valid_seconds=None if remaining_seconds is None else limit)
+        else:
+            mikrotik.create_account(server, username, password, limit_uptime_seconds=limit)
+    except ProvisionError:
         session.ended_at = clock.utcnow()
         session.end_reason = "provision_failed"
         session.revoked_at = session.ended_at  # nothing was created
@@ -46,10 +61,13 @@ def revoke(db: Session, session: VpnSession) -> bool:
     server = db.get(VpnServer, session.server_id)
     if server is None or not uses_router_accounts(server):
         return True
-    username, _ = security.session_credentials(session.id)
     try:
-        mikrotik.remove_account(server, username)
-    except mikrotik.MikrotikError as e:
+        if is_xray(server):
+            xui.remove_client(server, session.id)
+        else:
+            username, _ = security.session_credentials(session.id)
+            mikrotik.remove_account(server, username)
+    except ProvisionError as e:
         log.warning("could not revoke account of session %s: %s", session.id, e)
         return False
     session.revoked_at = clock.utcnow()
@@ -83,7 +101,7 @@ def sweep(db: Session) -> int:
         .where(
             VpnSession.ended_at.is_not(None),
             VpnSession.revoked_at.is_(None),
-            VpnServer.mt_api_url.is_not(None),
+            or_(VpnServer.mt_api_url.is_not(None), VpnServer.kind == "xray"),
         )
         .limit(SWEEP_BATCH)
         .with_for_update(of=VpnSession, skip_locked=True)

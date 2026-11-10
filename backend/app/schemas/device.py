@@ -53,6 +53,7 @@ class MeResponse(BaseModel):
 
 class ServerOut(BaseModel):
     id: int
+    kind: str = "openvpn"
     name: str
     country_code: str
     country_name_en: str

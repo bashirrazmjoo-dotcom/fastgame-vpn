@@ -10,7 +10,9 @@ from app.core import security
 from app.core.errors import ApiError
 from app.models.server import VpnServer
 from app.models.session import VpnSession
-from app.schemas.admin import MikrotikOut, ServerAdminOut, ServerIn
+from urllib.parse import urlsplit
+
+from app.schemas.admin import MikrotikOut, ServerAdminOut, ServerIn, XuiOut
 from app.services import ovpn
 
 router = APIRouter(prefix="/admin/servers", tags=["admin"], dependencies=[Depends(get_current_admin)])
@@ -19,6 +21,10 @@ router = APIRouter(prefix="/admin/servers", tags=["admin"], dependencies=[Depend
 def _to_out(server: VpnServer, active_connections: int) -> ServerAdminOut:
     return ServerAdminOut(
         id=server.id,
+        kind=server.kind,
+        xui=XuiOut(url=server.xui_url, username=server.xui_user or "", inbound_id=server.xui_inbound_id)
+        if server.xui_url
+        else None,
         name=server.name,
         country_code=server.country_code,
         country_name_en=server.country_name_en,
@@ -53,11 +59,45 @@ def _active_count(db: Session, server_id: int) -> int:
     )
 
 
+def _apply_xray(server: VpnServer, body: ServerIn) -> None:
+    link = body.ovpn_config.strip()
+    if not link.startswith("vless://") or "{uuid}" not in link:
+        raise ApiError(422, "link_invalid", "The link template must start with vless:// and contain {uuid}.")
+    parts = urlsplit(link.replace("{uuid}", "00000000-0000-0000-0000-000000000000"))
+    host = body.host or parts.hostname
+    port = body.port or parts.port
+    if not (host and port):
+        raise ApiError(422, "profile_incomplete", "Could not read host and port from the link; provide them.")
+    if body.xui is None and not server.xui_url:
+        raise ApiError(422, "xui_required", "3x-ui access (url, username, password, inbound id) is required.")
+    server.kind = "xray"
+    server.host, server.port, server.proto = host, port, "tcp"
+    server.ovpn_config = link
+    server.is_active = body.is_active
+    server.sort_order = body.sort_order
+    server.auth_username = server.auth_password_enc = None
+    server.mt_api_url = server.mt_api_user = server.mt_api_password_enc = None
+    server.mt_ppp_profile = server.mt_ca_pem = None
+    if body.xui is not None:
+        x = body.xui
+        if x.password is None and not server.xui_password_enc:
+            raise ApiError(422, "xui_password_required", "A password is required for the panel user.")
+        server.xui_url = x.url
+        server.xui_user = x.username
+        if x.password:
+            server.xui_password_enc = security.encrypt_secret(x.password)
+        server.xui_inbound_id = x.inbound_id
+
+
 def _apply(server: VpnServer, body: ServerIn) -> None:
     server.name = body.name
     server.country_code = body.country_code
     server.country_name_en = body.country_name_en
     server.country_name_fa = body.country_name_fa
+    if body.kind == "xray":
+        _apply_xray(server, body)
+        return
+    server.kind = "openvpn"
     parsed = ovpn.parse_profile(body.ovpn_config)
     host = body.host or parsed.host
     port = body.port or parsed.port

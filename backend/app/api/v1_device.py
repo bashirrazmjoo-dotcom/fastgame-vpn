@@ -103,6 +103,7 @@ def list_servers(_: Device = Depends(get_current_device), db: Session = Depends(
     return [
         ServerOut(
             id=s.id,
+            kind=s.kind,
             name=s.name,
             country_code=s.country_code,
             country_name_en=s.country_name_en,
