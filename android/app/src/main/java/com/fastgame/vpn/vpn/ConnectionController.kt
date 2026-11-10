@@ -136,7 +136,7 @@ class ConnectionController(
             anchor(started.isVip, started.remainingSeconds)
             _state.update { it.copy(phase = Phase.CONNECTING) }
 
-            val profile = VpnProfile(server.name, started.ovpnConfig, started.authUsername, started.authPassword)
+            val profile = VpnProfile(server.name, started.ovpnConfig, started.authUsername, started.authPassword, started.xrayLink)
             withTimeoutOrNull(CONNECT_TIMEOUT_MS) { engine.connect(profile) }
                 ?: throw EngineException(
                     "Timed out while connecting." + engine.diagnostics().let { if (it.isBlank()) "" else "\n$it" },

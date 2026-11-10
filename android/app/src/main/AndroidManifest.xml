@@ -28,6 +28,17 @@
             </intent-filter>
         </activity>
 
+        <!-- VPN service for Xray servers (the OpenVPN engine brings its own). -->
+        <service
+            android:name=".vpn.XrayVpnService"
+            android:exported="false"
+            android:foregroundServiceType="systemExempted"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
         <!-- Stores the in-app language choice on Android < 13. -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

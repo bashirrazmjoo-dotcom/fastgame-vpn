@@ -49,6 +49,7 @@ data class StartedSession(
     val ovpnConfig: String,
     val authUsername: String?,
     val authPassword: String?,
+    val xrayLink: String? = null, // vless:// link of this session's client (Xray servers)
 )
 
 enum class SessionStatus { ACTIVE, QUOTA_EXHAUSTED, CLOSED }
@@ -118,6 +119,7 @@ internal fun JSONObject.toStartedSession() = StartedSession(
     ovpnConfig = getString("ovpn_config"),
     authUsername = stringOrNull("auth_username"),
     authPassword = stringOrNull("auth_password"),
+    xrayLink = stringOrNull("xray_link"),
 )
 
 internal fun JSONObject.toSessionState() = SessionState(

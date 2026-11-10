@@ -18,3 +18,5 @@ __pycache__/
 
 # The shared debug signing key is public on purpose (see android/app/build.gradle.kts)
 !android/app/debug.keystore
+
+android/app/libs/

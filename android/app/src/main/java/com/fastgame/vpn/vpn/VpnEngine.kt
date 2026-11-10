@@ -10,6 +10,8 @@ data class VpnProfile(
     val ovpnConfig: String,
     val username: String?,
     val password: String?,
+    /** Set for Xray servers: the session's vless:// link. Then the OpenVPN fields are unused. */
+    val xrayLink: String? = null,
 )
 
 sealed interface EngineState {

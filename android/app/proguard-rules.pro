@@ -8,3 +8,7 @@
 -keep class de.blinkt.openvpn.** { *; }
 -keep class net.openvpn.ovpn3.** { *; }
 -keepclasseswithmembernames class * { native <methods>; }
+
+# Xray core (gomobile): classes are called from native code.
+-keep class go.** { *; }
+-keep class libv2ray.** { *; }
