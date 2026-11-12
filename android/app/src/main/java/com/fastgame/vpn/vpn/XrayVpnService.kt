@@ -34,14 +34,17 @@ class XrayVpnService : VpnService() {
             return START_NOT_STICKY
         }
         runCatching { startForeground(NOTIFICATION_ID, notification()) } // may be refused in the background
+        XrayRuntime.stage = "service-started"
         thread(name = "xray-start") { start(config) }
         return START_NOT_STICKY
     }
 
     private fun start(config: String) {
         try {
+            XrayRuntime.stage = "core-init"
             Seq.setContext(applicationContext)
             Libv2ray.initCoreEnv(filesDir.absolutePath, "")
+            XrayRuntime.stage = "tun"
             val builder = Builder()
                 .setSession(getString(R.string.app_name))
                 .setMtu(MTU)
@@ -55,6 +58,7 @@ class XrayVpnService : VpnService() {
             builder.addDisallowedApplication(packageName)
             val pfd = builder.establish() ?: throw IllegalStateException("The VPN permission was revoked.")
             tun = pfd
+            XrayRuntime.stage = "core-start"
             val controller = Libv2ray.newCoreController(object : CoreCallbackHandler {
                 override fun startup(): Long = 0
                 override fun shutdown(): Long = 0
@@ -63,10 +67,11 @@ class XrayVpnService : VpnService() {
             XrayRuntime.controller = controller
             controller.startLoop(config, pfd.fd)
             if (!controller.isRunning) throw IllegalStateException("The core did not start.")
+            XrayRuntime.stage = "running"
             XrayRuntime.state.value = EngineState.Connected
         } catch (e: Throwable) {
             Log.w(TAG, "Xray start failed", e)
-            XrayRuntime.state.value = EngineState.Failed(e.message ?: e.javaClass.simpleName)
+            XrayRuntime.state.value = EngineState.Failed("${XrayRuntime.stage}: ${(e.message ?: e.javaClass.simpleName).take(160)}")
             shutdown()
         }
     }

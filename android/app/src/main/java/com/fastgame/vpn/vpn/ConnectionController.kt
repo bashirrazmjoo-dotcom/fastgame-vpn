@@ -112,7 +112,8 @@ class ConnectionController(
                 if (notice is Notice.QuotaExhausted || notice is Notice.Blocked) { finalNotice = notice; return }
                 failures = if (outcome.wasConnected) 0 else failures + 1
                 val offline = notice is Notice.NetworkLost
-                if (!offline && failures >= MAX_FAILED_ATTEMPTS) { finalNotice = notice; return }
+                val limit = if (notice is Notice.EngineFailed || notice is Notice.ServiceError) MAX_ENGINE_FAILURES else MAX_FAILED_ATTEMPTS
+                if (!offline && failures >= limit) { finalNotice = notice; return }
                 _state.value = ConnectionState(phase = Phase.STARTING, serverId = server.id, remainingSeconds = _state.value.remainingSeconds, isVip = _state.value.isVip)
                 delay(backoffMillis(failures))
             }
@@ -250,5 +251,6 @@ class ConnectionController(
         const val NETWORK_GRACE_MS = 180_000L
         const val MIN_HEARTBEAT_SECONDS = 5
         const val MAX_FAILED_ATTEMPTS = 6
+        const val MAX_ENGINE_FAILURES = 2
     }
 }

@@ -99,7 +99,7 @@ class ConnectionControllerTest {
         advanceTimeBy(200_000); runCurrent()
         assertEquals(Phase.IDLE, c.state.value.phase)
         assertEquals(Notice.EngineFailed("boom"), c.state.value.notice)
-        assertEquals(6, b.stops)
+        assertEquals(2, b.stops) // engine errors are reported after two attempts, not hidden behind a spinner
     }
 
     @Test fun tunnelDropReconnectsByItself() = runTest {

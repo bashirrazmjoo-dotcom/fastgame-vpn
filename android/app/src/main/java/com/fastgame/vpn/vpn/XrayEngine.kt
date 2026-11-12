@@ -29,26 +29,38 @@ class XrayEngine(private val context: Context) : VpnEngine {
         }
         val link = XrayLink.parse(profile.xrayLink ?: throw EngineException("No server link."))
         XrayRuntime.state.value = EngineState.Connecting
+        XrayRuntime.stage = "probe"
         _detail.value = "xray"
 
-        // Probe: can the core reach the server and the internet through it (before touching the VPN)?
-        val delay = withContext(Dispatchers.IO) { probe(XrayConfig.build(link, withTun = false)) }
-        if (delay < 0) {
-            XrayRuntime.state.value = EngineState.Disconnected
-            throw EngineException("The server did not answer. $lastError".trim())
-        }
+        // Probe: can the core reach the server and the internet through it? A failed probe is not fatal
+        // (some servers do not route to the probe URL); it is reported if the tunnel then fails too.
+        val delay = withTimeoutOrNull(PROBE_TIMEOUT_MS) {
+            withContext(Dispatchers.IO) { probe(XrayConfig.build(link, withTun = false)) }
+        } ?: run { lastError = "probe timed out"; -1L }
+        val probeNote = if (delay < 0) " (probe failed: $lastError)" else ""
 
         XrayRuntime.pendingConfig = XrayConfig.build(link, withTun = true)
+        XrayRuntime.stage = "service-start"
         val intent = Intent(context, XrayVpnService::class.java)
-        if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(intent) else context.startService(intent)
+        try {
+            if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(intent) else context.startService(intent)
+        } catch (e: Exception) {
+            XrayRuntime.state.value = EngineState.Disconnected
+            throw EngineException("Could not start the VPN service: ${e.message.orEmpty().take(120)}$probeNote")
+        }
 
-        when (val result = XrayRuntime.state.first { it !is EngineState.Connecting }) {
+        val result = withTimeoutOrNull(START_TIMEOUT_MS) { XrayRuntime.state.first { it !is EngineState.Connecting } }
+        when (result) {
             EngineState.Connected -> Unit
             is EngineState.Failed -> {
                 XrayRuntime.state.value = EngineState.Disconnected
-                throw EngineException(result.reason)
+                throw EngineException(result.reason + probeNote)
             }
-            else -> throw EngineException("The connection was closed.")
+            null -> {
+                disconnect()
+                throw EngineException("Timed out at step '${XrayRuntime.stage}'$probeNote")
+            }
+            else -> throw EngineException("The connection was closed.$probeNote")
         }
     }
 
@@ -71,10 +83,12 @@ class XrayEngine(private val context: Context) : VpnEngine {
         _detail.value = null
     }
 
-    override fun diagnostics(): String = "xray: ${XrayRuntime.state.value} $lastError".trim()
+    override fun diagnostics(): String = "xray: ${XrayRuntime.state.value} step=${XrayRuntime.stage} $lastError".trim()
 
     private companion object {
         const val PROBE_URL = "https://www.gstatic.com/generate_204"
         const val STOP_TIMEOUT_MS = 5_000L
+        const val PROBE_TIMEOUT_MS = 12_000L
+        const val START_TIMEOUT_MS = 20_000L
     }
 }
