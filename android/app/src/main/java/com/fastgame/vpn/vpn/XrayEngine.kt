@@ -24,8 +24,8 @@ class XrayEngine(private val context: Context) : VpnEngine {
     @Volatile private var lastError = ""
 
     override suspend fun connect(profile: VpnProfile) {
-        if (Build.SUPPORTED_ABIS.none { it == "arm64-v8a" }) {
-            throw EngineException("This server type needs a 64-bit (arm64) phone.")
+        if (Build.SUPPORTED_ABIS.none { it == "arm64-v8a" || it == "armeabi-v7a" }) {
+            throw EngineException("This server type needs an ARM phone.")
         }
         val link = XrayLink.parse(profile.xrayLink ?: throw EngineException("No server link."))
         XrayRuntime.state.value = EngineState.Connecting

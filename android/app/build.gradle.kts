@@ -96,7 +96,7 @@ android {
 }
 
 // Xray core (MPL-2.0) from github.com/2dust/AndroidLibXrayLite. Downloaded, verified by SHA-256 and trimmed
-// to arm64 (no geo data, no x86/armv7 libraries) so the APK stays small. See docs/XRAY.md.
+// to arm64 + armv7 (no geo data, no x86 libraries) so the APK stays small. See docs/XRAY.md.
 val xrayVersion = "v26.9.30"
 val xraySha256 = "cf71680b776b9ca583747ba652f816b047a655eab875d8951e6141636d88bbd6"
 val xrayAar = layout.projectDirectory.file("libs/libv2ray.aar").asFile
@@ -115,7 +115,7 @@ val fetchXrayCore = tasks.register("fetchXrayCore") {
             ZipOutputStream(xrayAar.outputStream()).use { out ->
                 for (entry in zip.entries()) {
                     val n = entry.name
-                    val drop = n.startsWith("assets/") || (n.startsWith("jni/") && !n.startsWith("jni/arm64-v8a/"))
+                    val drop = n.startsWith("assets/") || (n.startsWith("jni/") && !n.startsWith("jni/arm64-v8a/") && !n.startsWith("jni/armeabi-v7a/"))
                     if (drop) continue
                     out.putNextEntry(ZipEntry(n))
                     zip.getInputStream(entry).use { it.copyTo(out) }
