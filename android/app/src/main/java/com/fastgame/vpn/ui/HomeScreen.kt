@@ -125,8 +125,6 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         }
         Spacer(Modifier.height(16.dp))
 
-        NoticeBanner(conn.notice, actions.onDismissNotice, actions.onCopyText)
-
         Spacer(Modifier.height(8.dp))
         ConnectButton(conn.phase, actions.onToggle)
         Spacer(Modifier.height(2.dp))
@@ -135,13 +133,8 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
 
         InfoRow(ui.selectedServer, ui.servers, conn.phase == Phase.IDLE, actions.onSelectServer, account, conn)
         val freeLeft = if (conn.phase != Phase.IDLE && conn.remainingSeconds != null) conn.remainingSeconds!! else account?.quota?.remainingSeconds ?: 1L
-        if (account != null && !account.isVip && freeLeft <= 0L) {
-            Spacer(Modifier.height(12.dp))
-            ScrambleText(
-                stringResource(R.string.free_time_over), Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                persian = Locale.getDefault().language == "fa",
-            )
-        }
+        val quotaOver = account != null && !account.isVip && freeLeft <= 0L
+        MessageArea(conn.notice, quotaOver, actions.onDismissNotice, actions.onCopyText)
         Spacer(Modifier.height(12.dp))
         if (account != null) IdCard(account.userCode, actions)
         Spacer(Modifier.height(12.dp))
@@ -192,29 +185,30 @@ private fun ConnectButton(phase: Phase, onClick: () -> Unit) {
     PowerButton(connected, busy, phase != Phase.DISCONNECTING, label, onClick)
 }
 
+/** The one place where messages appear: the out-of-time notice and every warning, in the same style. */
 @Composable
-private fun NoticeBanner(notice: Notice?, onDismiss: () -> Unit, onCopy: (String) -> Unit) {
-    if (notice == null) return
-    val text = when (notice) {
-        is Notice.QuotaExhausted -> stringResource(R.string.notice_quota_exhausted)
-        Notice.Blocked -> stringResource(R.string.notice_blocked)
-        Notice.SessionEnded -> stringResource(R.string.notice_session_ended)
-        Notice.ConnectionLost -> stringResource(R.string.notice_connection_lost)
-        Notice.NetworkLost -> stringResource(R.string.notice_network_lost)
-        Notice.ServerUnavailable -> stringResource(R.string.notice_server_unavailable)
-        is Notice.EngineFailed -> stringResource(R.string.notice_engine_failed, notice.reason)
-        is Notice.ServiceError -> stringResource(R.string.notice_service_error, notice.message)
-    }
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .glass(14.dp)
-            .border(1.dp, Warning.copy(alpha = 0.8f), RoundedCornerShape(14.dp)),
+private fun MessageArea(notice: Notice?, quotaOver: Boolean, onDismiss: () -> Unit, onCopy: (String) -> Unit) {
+    val text = when {
+        notice == null || notice is Notice.QuotaExhausted -> if (quotaOver || notice != null) stringResource(R.string.free_time_over) else null
+        notice == Notice.Blocked -> stringResource(R.string.notice_blocked)
+        notice == Notice.SessionEnded -> stringResource(R.string.notice_session_ended)
+        notice == Notice.ConnectionLost -> stringResource(R.string.notice_connection_lost)
+        notice == Notice.NetworkLost -> stringResource(R.string.notice_network_lost)
+        notice == Notice.ServerUnavailable -> stringResource(R.string.notice_server_unavailable)
+        notice is Notice.EngineFailed -> stringResource(R.string.notice_engine_failed, notice.reason)
+        notice is Notice.ServiceError -> stringResource(R.string.notice_service_error, notice.message)
+        else -> null
+    } ?: return
+    val isError = notice is Notice.EngineFailed || notice is Notice.ServiceError
+    Spacer(Modifier.height(12.dp))
+    Column(
+        Modifier.fillMaxWidth().modernCard(16.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(Modifier.padding(14.dp)) {
-            Text(text, color = Warning)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = { onCopy(text) }) { Text(stringResource(R.string.copy_id)) }
+        SpectrumText(text, Modifier.fillMaxWidth())
+        if (notice != null) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                if (isError) TextButton(onClick = { onCopy(text) }) { Text(stringResource(R.string.copy_id)) }
                 TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
             }
         }

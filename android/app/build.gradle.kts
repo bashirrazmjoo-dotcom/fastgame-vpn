@@ -86,6 +86,9 @@ android {
         jniLibs {
             // the OpenVPN engine executes a binary from the native library directory
             useLegacyPackaging = true
+            // OpenVPN3 is off by default (we run the classic OpenVPN binary), so its library is not shipped.
+            // libosslspeedtest.so must stay: NativeUtils loads it unconditionally.
+            excludes += setOf("**/libovpn3.so")
         }
     }
 
