@@ -65,4 +65,5 @@
     <string name="licenses_body">فست‌گیم نرم‌افزار آزاد و تحت مجوز GNU GPL v2 است (کد منبع در صفحه‌ی پروژه).\n\n• OpenVPN and ics-openvpn (Arne Schwabe و مشارکت‌کنندگان) – GNU GPL v2, https://github.com/schwabe/ics-openvpn\n• Vazirmatn فونت – SIL Open Font License 1.1, https://github.com/rastikerdar/vazirmatn\n• Android Jetpack، Compose، Kotlin، kotlinx.coroutines و OkHttp – Apache License 2.0\n• mbed TLS, OpenSSL, lz4, asio, fmt – هر کدام با مجوز خودشان، همراه موتور OpenVPN\n\nکد منبع: https://github.com/bashirrazmjoo-dotcom/fastgame-vpn</string>
     <string name="update_app">به‌روزرسانی</string>
     <string name="free_time_over">مهلت استفاده رایگان تمام شده! برای ادامه، اشتراک VIP تهیه کنید.</string>
+    <string name="change_language">تغییر زبان</string>
 </resources>

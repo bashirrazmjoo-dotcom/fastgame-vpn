@@ -114,14 +114,15 @@ private fun ErrorView(error: LoadError, actions: HomeActions) {
 @Composable
 private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions) {
     val account = ui.account
+    val fa = Locale.getDefault().language == "fa"
+    Box(Modifier.fillMaxSize()) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(28.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().height(48.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             LiquidTitle(stringResource(R.string.app_name))
-            TextButton(onClick = actions.onToggleLanguage) { Text("فارسی / EN") }
         }
         Spacer(Modifier.height(16.dp))
 
@@ -163,6 +164,12 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
             confirmButton = { TextButton(onClick = { showLicenses = false }) { Text(stringResource(android.R.string.ok)) } },
         )
         Text("v${com.fastgame.vpn.BuildConfig.APP_VERSION_CODE} · build ${com.fastgame.vpn.BuildConfig.BUILD_ID}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+    }
+    // Overlay: unfolds over the content without pushing it down. TopEnd follows the layout direction.
+    FluidMenu(
+        items = listOf(FluidItem(if (fa) "EN" else "فا", stringResource(R.string.change_language), actions.onToggleLanguage)),
+        modifier = Modifier.align(Alignment.TopEnd).padding(top = 48.dp, end = 20.dp),
+    )
     }
 }
 
