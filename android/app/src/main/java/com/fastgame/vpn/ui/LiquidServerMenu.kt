@@ -51,9 +51,6 @@ import java.util.Locale
 
 private val LiquidEase = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
 // Same palette as the rest of the app: frosted card closed, deeper navy panel + mint accent when open.
-private val MenuPanel = Color(0xFF0D1230)
-private val MenuText = Color(0xFFEAF0FF)
-private val MenuAccent = Accent
 
 private const val BAR_DP = 60
 private const val ITEM_DP = 40
@@ -96,16 +93,16 @@ internal fun LiquidServerMenu(
             .clip(RoundedCornerShape(radius))
             .drawBehind {
                 val corner = CornerRadius(radius.toPx())
-                drawRoundRect(Color(0x0AFFFFFF), cornerRadius = corner)
+                drawRoundRect(Pal.cardFill, cornerRadius = corner)
                 // Oval of 200% x 200%, centred horizontally; its bottom edge moves from 300% up to 120% of the height.
                 val w = size.width
                 val h = size.height
                 val bottom = h * (3f - 1.8f * rise)
-                drawOval(MenuPanel, topLeft = Offset(-w / 2f, bottom - 2f * h), size = Size(2f * w, 2f * h))
-                drawRoundRect(Color(0x24FFFFFF), cornerRadius = corner, style = Stroke(1.dp.toPx()))
+                drawOval(Pal.panel, topLeft = Offset(-w / 2f, bottom - 2f * h), size = Size(2f * w, 2f * h))
+                drawRoundRect(Pal.cardBorder, cornerRadius = corner, style = Stroke(1.dp.toPx()))
                 val inset = radius.toPx()
                 drawLine(
-                    Brush.horizontalGradient(listOf(Color.Transparent, MenuAccent.copy(alpha = 0.6f), Color.Transparent), startX = inset, endX = w - inset),
+                    Brush.horizontalGradient(listOf(Color.Transparent, Pal.accent.copy(alpha = 0.6f), Color.Transparent), startX = inset, endX = w - inset),
                     Offset(inset, 0.5.dp.toPx()), Offset(w - inset, 0.5.dp.toPx()), 1.dp.toPx(),
                 )
             },
@@ -143,7 +140,7 @@ internal fun LiquidServerMenu(
                         Spacer(Modifier.width(10.dp))
                         Text(
                             serverLabel(s, fa),
-                            color = if (chosen) MenuAccent else MenuText,
+                            color = if (chosen) Pal.accent else Pal.text,
                             fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
                         )
                     }
@@ -160,7 +157,7 @@ internal fun LiquidServerMenu(
                     .padding(horizontal = 22.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val ink = MenuText
+                val ink = Pal.text
                 Text(flagEmoji(selected?.countryCode), fontSize = 26.sp)
                 Spacer(Modifier.width(12.dp))
                 Text(

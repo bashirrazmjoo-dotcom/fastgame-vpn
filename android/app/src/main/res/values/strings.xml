@@ -66,4 +66,5 @@
     <string name="update_app">Update</string>
     <string name="free_time_over">Free trial has ended! Get a VIP subscription to continue.</string>
     <string name="change_language">Change language</string>
+    <string name="change_theme">Light / dark theme</string>
 </resources>

@@ -49,7 +49,7 @@ fun LiquidTitle(text: String, modifier: Modifier = Modifier, titleSize: Int = 34
                 val w = size.width
                 val h = size.height
                 // Base fill: only where the glyphs are.
-                drawRect(Brush.linearGradient(listOf(AccentViolet, Accent), Offset.Zero, Offset(w, h)), blendMode = BlendMode.SrcIn)
+                drawRect(Brush.linearGradient(listOf(BrandViolet, BrandMint), Offset.Zero, Offset(w, h)), blendMode = BlendMode.SrcIn)
                 fun wave(level: Float, amp: Float, ph: Float, color: Color) {
                     val p = Path()
                     val y0 = h * level

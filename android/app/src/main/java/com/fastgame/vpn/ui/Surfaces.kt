@@ -65,8 +65,8 @@ fun Modifier.modernCard(corner: Dp = 16.dp): Modifier = this
     .clip(RoundedCornerShape(corner))
     .drawBehind {
         val r = CornerRadius(corner.toPx())
-        drawRoundRect(Color(0x0AFFFFFF), cornerRadius = r)
-        drawRoundRect(Color(0x24FFFFFF), cornerRadius = r, style = Stroke(1.dp.toPx()))
+        drawRoundRect(Pal.cardFill, cornerRadius = r)
+        drawRoundRect(Pal.cardBorder, cornerRadius = r, style = Stroke(1.dp.toPx()))
         val inset = corner.toPx()
         drawLine(
             Brush.horizontalGradient(listOf(Color.Transparent, Accent.copy(alpha = 0.6f), Color.Transparent), startX = inset, endX = size.width - inset),
@@ -91,6 +91,6 @@ fun GlassButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifie
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = Color(0xFFEAF0FF), style = androidx.compose.material3.MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+        Text(label, color = Pal.text, style = androidx.compose.material3.MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
     }
 }

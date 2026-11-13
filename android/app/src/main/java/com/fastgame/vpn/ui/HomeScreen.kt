@@ -69,6 +69,7 @@ class HomeActions(
     val onUpdate: () -> Unit,
     val onPrivacy: () -> Unit,
     val onToggleLanguage: () -> Unit,
+    val onToggleTheme: () -> Unit,
     val onDismissNotice: () -> Unit,
     val onAcceptDisclosure: () -> Unit,
     val onDeclineDisclosure: () -> Unit,
@@ -167,7 +168,10 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
     }
     // Overlay: unfolds over the content without pushing it down. TopEnd follows the layout direction.
     FluidMenu(
-        items = listOf(FluidItem(if (fa) "EN" else "فا", stringResource(R.string.change_language), actions.onToggleLanguage)),
+        items = listOf(
+            FluidItem(if (fa) "EN" else "فا", stringResource(R.string.change_language), actions.onToggleLanguage),
+            FluidItem("", stringResource(R.string.change_theme), actions.onToggleTheme) { ThemeGlyph(sun = !Pal.light, color = Pal.text) },
+        ),
         modifier = Modifier.align(Alignment.TopEnd).padding(top = 48.dp, end = 20.dp),
     )
     }

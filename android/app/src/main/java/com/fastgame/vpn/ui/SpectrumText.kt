@@ -20,7 +20,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 
 /** Colours of the wash, taken from the app palette. */
-private val SpectrumColors = listOf(Accent, AccentViolet, Warning, Accent)
 
 /**
  * Multi-colour wash that drifts through the glyphs (a gradient brush that slides back and forth).
@@ -32,7 +31,7 @@ fun SpectrumText(
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.bodyLarge,
     durationMillis: Int = 4000,
-    colors: List<Color> = SpectrumColors,
+    colors: List<Color> = listOf(Accent, AccentViolet, Warning, Accent),
 ) {
     val t = rememberInfiniteTransition(label = "spectrum")
     val shift by t.animateFloat(0f, 1f, infiniteRepeatable(tween(durationMillis, easing = LinearEasing), RepeatMode.Reverse), label = "shift")

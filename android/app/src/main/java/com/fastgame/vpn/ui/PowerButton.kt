@@ -108,13 +108,13 @@ private fun RainbowPower(tap: Modifier) {
                     canvas.nativeCanvas.drawCircle(cx, cy, ring, paint)
                 } }
                 // the disc takes the card colour (same faint fill and border as the other cards)
-                drawCircle(Color(0x0DFFFFFF), radius = ring - 2.dp.toPx())
-                drawCircle(Color(0x24FFFFFF), radius = ring - 2.dp.toPx(), style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx()))
+                drawCircle(Pal.discFill, radius = ring - 2.dp.toPx())
+                drawCircle(Pal.cardBorder, radius = ring - 2.dp.toPx(), style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx()))
             }
             .then(tap),
         contentAlignment = Alignment.Center,
     ) {
-        PowerGlyph(Color.White, 64.dp)
+        PowerGlyph(Pal.text, 64.dp)
     }
 }
 

@@ -37,6 +37,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val uiPrefs = getSharedPreferences("ui", MODE_PRIVATE)
+        com.fastgame.vpn.ui.Pal.light = uiPrefs.getBoolean("light", false)
         setContent {
             FastGameTheme {
                 val vm: MainViewModel = viewModel(factory = object : ViewModelProvider.Factory {
@@ -93,6 +95,10 @@ class MainActivity : AppCompatActivity() {
                     onToggleLanguage = {
                         val next = if (Locale.getDefault().language == "fa") "en" else "fa"
                         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(next))
+                    },
+                    onToggleTheme = {
+                        com.fastgame.vpn.ui.Pal.light = !com.fastgame.vpn.ui.Pal.light
+                        uiPrefs.edit().putBoolean("light", com.fastgame.vpn.ui.Pal.light).apply()
                     },
                     onDismissNotice = vm::dismissNotice,
                     onAcceptDisclosure = { if (vm.acceptDisclosure()) beginConnect() },

@@ -44,7 +44,7 @@ private val Cell = 48.dp
 private val Step = 52.dp
 
 /** One entry of the fluid menu: a short text (a script letter pair, a number...) in a circle. */
-data class FluidItem(val label: String, val description: String, val onClick: () -> Unit)
+data class FluidItem(val label: String, val description: String, val onClick: () -> Unit, val icon: (@Composable () -> Unit)? = null)
 
 /**
  * Circular menu that unfolds downward: the round head swaps between "menu" and "close", and each item
@@ -68,7 +68,8 @@ fun FluidMenu(items: List<FluidItem>, modifier: Modifier = Modifier) {
                         interactionSource = remember { MutableInteractionSource() }, indication = null,
                     ) { open = false; item.onClick() },
             ) {
-                Text(item.label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                if (item.icon != null) item.icon.invoke()
+                else Text(item.label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             }
         }
         // Head (drawn last so it stays on top of the items while they slide out of it).
@@ -103,8 +104,30 @@ private fun Cell(modifier: Modifier, content: @Composable () -> Unit) {
         modifier
             .size(Cell)
             .clip(CircleShape)
-            .drawBehind { drawCircle(Color(0xFF12172F)) }
-            .border(1.dp, Color(0x24FFFFFF), CircleShape),
+            .drawBehind { drawCircle(Pal.cell) }
+            .border(1.dp, Pal.cardBorder, CircleShape),
         contentAlignment = Alignment.Center,
     ) { content() }
+}
+
+/** Sun (shown while dark: tap for light) or crescent moon (shown while light: tap for dark). */
+@Composable
+fun ThemeGlyph(sun: Boolean, color: Color) {
+    Canvas(Modifier.size(22.dp)) {
+        val c = Offset(size.width / 2, size.height / 2)
+        val stroke = 1.8.dp.toPx()
+        if (sun) {
+            drawCircle(color, radius = size.width * 0.2f, center = c, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
+            for (k in 0 until 8) {
+                val a = Math.toRadians(k * 45.0)
+                val dx = Math.cos(a).toFloat(); val dy = Math.sin(a).toFloat()
+                drawLine(color, Offset(c.x + dx * size.width * 0.32f, c.y + dy * size.width * 0.32f), Offset(c.x + dx * size.width * 0.46f, c.y + dy * size.width * 0.46f), stroke, StrokeCap.Round)
+            }
+        } else {
+            val outer = androidx.compose.ui.graphics.Path().apply { addOval(androidx.compose.ui.geometry.Rect(c, size.width * 0.38f)) }
+            val cut = androidx.compose.ui.graphics.Path().apply { addOval(androidx.compose.ui.geometry.Rect(Offset(c.x + size.width * 0.2f, c.y - size.width * 0.12f), size.width * 0.32f)) }
+            val moon = androidx.compose.ui.graphics.Path.combine(androidx.compose.ui.graphics.PathOperation.Difference, outer, cut)
+            drawPath(moon, color)
+        }
+    }
 }

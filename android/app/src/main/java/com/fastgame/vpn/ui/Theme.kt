@@ -15,7 +15,11 @@ import com.fastgame.vpn.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -25,23 +29,63 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 // Web3 look: deep space background, violet/cyan neon accents, frosted-glass panels.
-val Accent = Color(0xFF38E8C6)      // cyan-mint
-val AccentViolet = Color(0xFF8B5CF6)
-val Warning = Color(0xFFFFB454)
-val Ink = Color(0xFF070A18)
+/** The brand wordmark keeps its original colours in every theme. */
+val BrandMint = Color(0xFF38E8C6)
+val BrandViolet = Color(0xFF8B5CF6)
 
-val NeonBrush = Brush.linearGradient(listOf(AccentViolet, Accent))
+/**
+ * Colour set that follows the chosen theme. [light] is snapshot state, so everything that reads a colour
+ * from here (compositions and draw blocks alike) updates the moment the theme is switched.
+ * Dark = the original look; light = neutral greys with an "AI purple" accent.
+ */
+object Pal {
+    var light by mutableStateOf(false)
+    val accent get() = if (light) Color(0xFF6D4AFF) else BrandMint
+    val violet get() = if (light) Color(0xFFA78BFA) else BrandViolet
+    val warning get() = if (light) Color(0xFFB45309) else Color(0xFFFFB454)
+    val bg get() = if (light) Color(0xFFF4F3F9) else Color(0xFF070A18)
+    val text get() = if (light) Color(0xFF1B1A24) else Color(0xFFEAF0FF)
+    val textMuted get() = if (light) Color(0xFF6B6880) else Color(0xFF9FA9C9)
+    val cardFill get() = if (light) Color(0xFFFFFFFF) else Color(0x0AFFFFFF)
+    val cardBorder get() = if (light) Color(0x1F1B1A24) else Color(0x24FFFFFF)
+    val discFill get() = if (light) Color(0xFFFFFFFF) else Color(0x0DFFFFFF)
+    val panel get() = if (light) Color(0xFFEDE9FE) else Color(0xFF0D1230)
+    val cell get() = if (light) Color(0xFFFFFFFF) else Color(0xFF12172F)
+    val bgTop get() = if (light) Color(0xFFFAF9FD) else Color(0xFF0A0F25)
+    val bgBottom get() = if (light) Color(0xFFEFEDF8) else Color(0xFF0B0720)
+    val orbA get() = if (light) 0.10f else 0.35f
+    val orbB get() = if (light) 0.08f else 0.22f
+}
 
-private val Scheme = darkColorScheme(
-    primary = Accent,
+val Accent: Color get() = Pal.accent
+val AccentViolet: Color get() = Pal.violet
+val Warning: Color get() = Pal.warning
+val Ink: Color get() = Pal.bg
+
+val NeonBrush get() = Brush.linearGradient(listOf(AccentViolet, Accent))
+
+private val DarkScheme = darkColorScheme(
+    primary = BrandMint,
     onPrimary = Color(0xFF031A16),
-    background = Ink,
+    background = Color(0xFF070A18),
     onBackground = Color(0xFFEAF0FF),
     surface = Color(0x14FFFFFF),
     onSurface = Color(0xFFEAF0FF),
     surfaceVariant = Color(0x1FFFFFFF),
     onSurfaceVariant = Color(0xFF9FA9C9),
     error = Color(0xFFFF6B8B),
+)
+
+private val LightScheme = lightColorScheme(
+    primary = Color(0xFF6D4AFF),
+    onPrimary = Color.White,
+    background = Color(0xFFF4F3F9),
+    onBackground = Color(0xFF1B1A24),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF1B1A24),
+    surfaceVariant = Color(0xFFEDEBF4),
+    onSurfaceVariant = Color(0xFF6B6880),
+    error = Color(0xFFD6336C),
 )
 
 /**
@@ -70,7 +114,16 @@ val AppTypography = Typography(
 
 @Composable
 fun FastGameTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = Scheme, typography = AppTypography, content = content)
+    val light = Pal.light
+    val view = androidx.compose.ui.platform.LocalView.current
+    androidx.compose.runtime.SideEffect {
+        val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
+        androidx.core.view.WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = light
+            isAppearanceLightNavigationBars = light
+        }
+    }
+    MaterialTheme(colorScheme = if (light) LightScheme else DarkScheme, typography = AppTypography, content = content)
 }
 
 /** Full-screen background: dark gradient with two soft glowing orbs. */
@@ -84,11 +137,11 @@ fun Web3Background(content: @Composable BoxScope.() -> Unit) {
     Box(
         Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF0A0F25), Ink, Color(0xFF0B0720))))
+            .background(Brush.verticalGradient(listOf(Pal.bgTop, Pal.bg, Pal.bgBottom)))
             .drawBehind {
                 drawCircle(
                     Brush.radialGradient(
-                        listOf(AccentViolet.copy(alpha = 0.35f), Color.Transparent),
+                        listOf(AccentViolet.copy(alpha = Pal.orbA), Color.Transparent),
                         center = Offset(size.width * 0.1f, size.height * 0.08f),
                         radius = size.width * 0.9f,
                     ),
@@ -97,7 +150,7 @@ fun Web3Background(content: @Composable BoxScope.() -> Unit) {
                 )
                 drawCircle(
                     Brush.radialGradient(
-                        listOf(Accent.copy(alpha = 0.22f), Color.Transparent),
+                        listOf(Accent.copy(alpha = Pal.orbB), Color.Transparent),
                         center = Offset(size.width * 0.95f, size.height * 0.85f),
                         radius = size.width * 0.8f,
                     ),
