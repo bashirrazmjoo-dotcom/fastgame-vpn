@@ -291,22 +291,22 @@ private fun TimeCountdown(account: Account?, conn: ConnectionState, modifier: Mo
     val values = if (unlimited) null else listOf(left / 86400, (left % 86400) / 3600, (left % 3600) / 60, left % 60)
     val active = unlimited || left > 0
     // One card: title + status badge, the four tiles, and a small caption.
-    Column(modifier.modernCard(20.dp).padding(horizontal = 14.dp, vertical = 16.dp)) {
+    Column(modifier.modernCard(18.dp).padding(horizontal = 12.dp, vertical = 10.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("\u23F3 " + stringResource(R.string.time_card_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text("\u23F3 " + stringResource(R.string.time_card_title), style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold), modifier = Modifier.weight(1f))
             val badge = if (active) Accent else Warning
             Text(
                 stringResource(if (active) R.string.time_active else R.string.time_expired),
                 style = MaterialTheme.typography.labelSmall, color = badge, maxLines = 1,
-                modifier = Modifier.background(badge.copy(alpha = 0.16f), androidx.compose.foundation.shape.RoundedCornerShape(50)).padding(horizontal = 12.dp, vertical = 4.dp),
+                modifier = Modifier.background(badge.copy(alpha = 0.16f), androidx.compose.foundation.shape.RoundedCornerShape(50)).padding(horizontal = 10.dp, vertical = 2.dp),
             )
         }
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(8.dp))
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (i in 0..3) {
                     Column(
-                        Modifier.weight(1f).background(Pal.tile, androidx.compose.foundation.shape.RoundedCornerShape(16.dp)).padding(vertical = 14.dp),
+                        Modifier.weight(1f).background(Pal.tile, androidx.compose.foundation.shape.RoundedCornerShape(14.dp)).padding(vertical = 7.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         if (values == null) {
@@ -314,7 +314,7 @@ private fun TimeCountdown(account: Account?, conn: ConnectionState, modifier: Mo
                         } else {
                             AnimatedNumber(String.format(locale, "%02d", values[i]))
                         }
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.height(1.dp))
                         Text(
                             stringResource(labels[i]),
                             style = MaterialTheme.typography.labelSmall,
@@ -325,7 +325,7 @@ private fun TimeCountdown(account: Account?, conn: ConnectionState, modifier: Mo
                 }
             }
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(6.dp))
         Text(
             stringResource(R.string.time_card_note),
             style = MaterialTheme.typography.labelSmall,
@@ -336,8 +336,8 @@ private fun TimeCountdown(account: Account?, conn: ConnectionState, modifier: Mo
 }
 
 private val TimeTextStyle = androidx.compose.ui.text.TextStyle(
-    fontSize = 26.sp,
-    lineHeight = 32.sp,
+    fontSize = 22.sp,
+    lineHeight = 28.sp,
     fontWeight = FontWeight.Bold,
     fontFeatureSettings = "tnum",
 )
