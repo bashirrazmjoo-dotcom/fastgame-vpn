@@ -289,28 +289,49 @@ private fun TimeCountdown(account: Account?, conn: ConnectionState, modifier: Mo
     val locale = Locale.getDefault()
     val labels = listOf(R.string.unit_days, R.string.unit_hours, R.string.unit_minutes, R.string.unit_seconds)
     val values = if (unlimited) null else listOf(left / 86400, (left % 86400) / 3600, (left % 3600) / 60, left % 60)
-    androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
-        Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (i in 0..3) {
-                Column(
-                    Modifier.weight(1f).modernCard(16.dp).padding(vertical = 14.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    if (values == null) {
-                        Text("\u221E", style = TimeTextStyle, color = Accent)
-                    } else {
-                        AnimatedNumber(String.format(locale, "%02d", values[i]))
+    val active = unlimited || left > 0
+    // One card: title + status badge, the four tiles, and a small caption.
+    Column(modifier.modernCard(20.dp).padding(horizontal = 14.dp, vertical = 16.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("\u23F3 " + stringResource(R.string.time_card_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            val badge = if (active) Accent else Warning
+            Text(
+                stringResource(if (active) R.string.time_active else R.string.time_expired),
+                style = MaterialTheme.typography.labelSmall, color = badge, maxLines = 1,
+                modifier = Modifier.background(badge.copy(alpha = 0.16f), androidx.compose.foundation.shape.RoundedCornerShape(50)).padding(horizontal = 12.dp, vertical = 4.dp),
+            )
+        }
+        Spacer(Modifier.height(14.dp))
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (i in 0..3) {
+                    Column(
+                        Modifier.weight(1f).background(Pal.tile, androidx.compose.foundation.shape.RoundedCornerShape(16.dp)).padding(vertical = 14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        if (values == null) {
+                            Text("\u221E", style = TimeTextStyle, color = Accent)
+                        } else {
+                            AnimatedNumber(String.format(locale, "%02d", values[i]))
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            stringResource(labels[i]),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                        )
                     }
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        stringResource(labels[i]),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
                 }
             }
         }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            stringResource(R.string.time_card_note),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
+        )
     }
 }
 

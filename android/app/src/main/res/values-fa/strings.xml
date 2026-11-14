@@ -67,4 +67,8 @@
     <string name="free_time_over">مهلت استفاده رایگان تمام شده! برای ادامه، اشتراک VIP تهیه کنید.</string>
     <string name="change_language">تغییر زبان</string>
     <string name="change_theme">تم روشن / تیره</string>
+    <string name="time_card_title">مهلت استفاده از برنامه</string>
+    <string name="time_card_note">زمان باقی‌مانده تا پایان مهلت دسترسی به برنامه</string>
+    <string name="time_active">فعال</string>
+    <string name="time_expired">پایان یافته</string>
 </resources>

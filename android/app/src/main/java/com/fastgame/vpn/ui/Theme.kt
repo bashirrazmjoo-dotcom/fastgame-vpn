@@ -47,6 +47,7 @@ object Pal {
     val text get() = if (light) Color(0xFF1B1A24) else Color(0xFFEAF0FF)
     val textMuted get() = if (light) Color(0xFF6B6880) else Color(0xFF9FA9C9)
     val cardFill get() = if (light) Color(0xFFFFFFFF) else Color(0x0AFFFFFF)
+    val tile get() = if (light) Color(0x0F1B1A24) else Color(0x14FFFFFF)
     val cardBorder get() = if (light) Color(0x1F1B1A24) else Color(0x24FFFFFF)
     val discFill get() = if (light) Color(0xFFFFFFFF) else Color(0x0DFFFFFF)
     val panel get() = if (light) Color(0xFFEDE9FE) else Color(0xFF0D1230)
