@@ -246,7 +246,7 @@ private fun InfoRow(server: VpnServerInfo?, servers: List<VpnServerInfo>, enable
 @Composable
 private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>, enabled: Boolean, onSelect: (Int) -> Unit, modifier: Modifier) {
     LiquidServerMenu(
-        selected = selected, servers = servers, canPick = enabled && servers.size > 1,
+        selected = selected, servers = servers, canPick = servers.size > 1,
         emptyLabel = stringResource(R.string.choose_server), onSelect = onSelect, modifier = modifier,
     )
 }
@@ -328,8 +328,9 @@ private fun TimeCountdown(account: Account?, conn: ConnectionState, modifier: Mo
         Spacer(Modifier.height(6.dp))
         Text(
             stringResource(R.string.time_card_note),
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1, softWrap = false,
             modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
         )
     }

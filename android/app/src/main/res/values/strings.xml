@@ -68,7 +68,7 @@
     <string name="change_language">Change language</string>
     <string name="change_theme">Light / dark theme</string>
     <string name="time_card_title">App access period</string>
-    <string name="time_card_note">Time remaining until your access to the app ends</string>
+    <string name="time_card_note">Time left until access ends</string>
     <string name="time_active">Active</string>
     <string name="time_expired">Ended</string>
 </resources>
