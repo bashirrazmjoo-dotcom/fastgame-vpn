@@ -175,8 +175,9 @@
   }
 
   function setMenu(open) {
-    $("menu-panel").hidden = !open;
+    $("lm").classList.toggle("open", open);
     $("btn-menu").setAttribute("aria-expanded", String(open));
+    document.querySelectorAll(".lm-item").forEach((b) => (b.tabIndex = open ? 0 : -1));
   }
 
   function toast(text) {
@@ -193,7 +194,7 @@
     invoke(phase === "idle" ? "connect" : "disconnect");
   };
   $("server").onchange = (e) => invoke("select_server", { id: Number(e.target.value) });
-  $("btn-menu").onclick = (e) => { e.stopPropagation(); setMenu($("menu-panel").hidden); };
+  $("btn-menu").onclick = (e) => { e.stopPropagation(); setMenu(!$("lm").classList.contains("open")); };
   document.addEventListener("click", (e) => { if (!e.target.closest(".menu")) setMenu(false); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
   $("btn-lang").onclick = () => { setMenu(false); invoke("set_language", { lang: lang === "fa" ? "en" : "fa" }); };
@@ -202,8 +203,23 @@
   $("btn-share-round").onclick = () => { setMenu(false); share(); };
   $("btn-support").onclick = (e) => invoke("open_link", { link: e.currentTarget.dataset.link });
   $("btn-privacy").onclick = () => invoke("open_link", { link: "privacy" });
+  // Copy button: the row blurs out, a confirmation with a progress fill shows for 4 s, then it returns.
+  let ccTimers = [];
   $("btn-copy").onclick = async () => {
-    try { await navigator.clipboard.writeText(snap.account.user_code); toast(t("id_copied")); } catch (_) {}
+    const code = snap.account.user_code;
+    try { await navigator.clipboard.writeText(code); } catch (_) {
+      const ta = document.createElement("textarea");
+      ta.value = code; ta.style.cssText = "position:fixed;left:-9999px;top:-9999px";
+      document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (_) {} ta.remove();
+    }
+    const row = $("id-row"), bar = $("cc-progress");
+    ccTimers.forEach(clearTimeout); ccTimers = [];
+    row.classList.remove("confirm"); row.classList.add("copied");
+    bar.style.transition = "none"; bar.style.width = "0%"; void bar.offsetWidth;
+    bar.style.transition = "width 4s linear, opacity .5s"; bar.style.width = "100%";
+    ccTimers.push(setTimeout(() => row.classList.add("confirm"), 400));
+    ccTimers.push(setTimeout(() => row.classList.remove("confirm"), 4000));
+    ccTimers.push(setTimeout(() => { row.classList.remove("copied"); bar.style.transition = "none"; bar.style.width = "0%"; }, 4400));
   };
   $("btn-licenses").onclick = () => { $("licenses-dialog").querySelector("h3").textContent = t("licenses"); $("licenses-text").textContent = t("licenses_body"); $("licenses-dialog").showModal(); };
   $("btn-licenses-close").onclick = () => $("licenses-dialog").close();

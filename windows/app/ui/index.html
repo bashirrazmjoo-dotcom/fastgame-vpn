@@ -11,23 +11,19 @@
   <div class="bg" aria-hidden="true"></div>
   <main class="app">
     <header class="top">
-      <div class="menu">
-        <button class="round burger" id="btn-menu" aria-expanded="false" aria-controls="menu-panel" data-i18n-title="menu" title="" aria-label="menu">
-          <svg class="pointer-events-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="l1" d="M4 12L20 12"/><path class="l2" d="M4 12H20"/><path class="l3" d="M4 12H20"/></svg>
-        </button>
-        <div class="menu-panel" id="menu-panel" hidden>
-          <button class="menu-item" id="btn-lang" type="button">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg>
-            <span data-i18n="change_language"></span>
+      <div class="menu lm" id="lm">
+        <div class="lm-box">
+          <div class="lm-bg"></div>
+          <div class="lm-dark"></div>
+          <button class="lm-bar" id="btn-menu" type="button" aria-expanded="false" aria-controls="lm-items">
+            <span class="lm-title" data-i18n="menu"></span>
+            <span class="lm-burger" aria-hidden="true"><i></i><i></i></span>
           </button>
-          <button class="menu-item" id="btn-theme" type="button">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-            <span data-i18n="change_theme"></span>
-          </button>
-          <button class="menu-item" id="btn-share-round" type="button">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/></svg>
-            <span data-i18n="share_app"></span>
-          </button>
+          <div class="lm-items" id="lm-items">
+            <button class="lm-item" id="btn-lang" type="button" tabindex="-1"><span class="roll"><span data-i18n="change_language"></span><span data-i18n="change_language" aria-hidden="true"></span></span></button>
+            <button class="lm-item" id="btn-theme" type="button" tabindex="-1"><span class="roll"><span data-i18n="change_theme"></span><span data-i18n="change_theme" aria-hidden="true"></span></span></button>
+            <button class="lm-item" id="btn-share-round" type="button" tabindex="-1"><span class="roll"><span data-i18n="share_app"></span><span data-i18n="share_app" aria-hidden="true"></span></span></button>
+          </div>
         </div>
       </div>
       <h1 class="brand" dir="ltr">FastGame</h1>
@@ -67,9 +63,19 @@
       <button class="btn" id="btn-support" data-i18n="support"></button>
     </section>
 
-    <section class="id" id="id-row" hidden>
-      <span data-i18n="label_your_id"></span>
-      <button class="code" id="btn-copy" dir="ltr" type="button"><span id="user-code"></span></button>
+    <section class="copycode" id="id-row" hidden>
+      <div class="cc-progress" id="cc-progress"></div>
+      <div class="cc-main">
+        <div class="cc-text">
+          <small data-i18n="label_your_id"></small>
+          <span class="cc-code" id="user-code" dir="ltr"></span>
+        </div>
+        <button class="cc-btn" id="btn-copy" type="button" data-i18n="copy"></button>
+      </div>
+      <div class="cc-done" aria-live="polite">
+        <span class="cc-tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span>
+        <span data-i18n="id_copied"></span>
+      </div>
     </section>
 
     <footer class="foot">
