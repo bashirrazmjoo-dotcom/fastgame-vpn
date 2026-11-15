@@ -153,3 +153,34 @@ dialog { background: var(--neu); box-shadow: var(--raise); border: 0; }
 .cc-tick svg { width: 16px; height: 16px; }
 .cc-tick path { stroke-dasharray: 24; stroke-dashoffset: 24; transition: stroke-dashoffset .6s cubic-bezier(.4,0,.2,1) .3s; }
 .copycode.confirm .cc-tick path { stroke-dashoffset: 0; }
+
+/* ---- Previous round menu button + dropdown (neumorphic colours) ---- */
+.menu { position: relative; display: flex; }
+.burger svg path { transform-origin: center; transition: all .3s cubic-bezier(.5,.85,.25,1.1); }
+.burger .l1 { transform: translateY(-6px); }
+.burger .l3 { transform: translateY(6px); }
+.burger[aria-expanded="true"] .l1 { transform: rotate(315deg); }
+.burger[aria-expanded="true"] .l2 { transform: rotate(45deg); }
+.burger[aria-expanded="true"] .l3 { transform: rotate(135deg); }
+.menu-panel { position: absolute; top: 50px; inset-inline-start: 0; z-index: 40; min-width: 230px; padding: 8px; display: flex; flex-direction: column; gap: 2px;
+  background: var(--neu); border-radius: 18px; box-shadow: var(--raise); }
+.menu-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 12px; background: none; color: var(--text); font: inherit; font-size: 14px; cursor: pointer; text-align: start; }
+.menu-item:hover { box-shadow: var(--inset); }
+
+/* ---- Server picker uses the liquid-morph control ---- */
+.card.server { position: relative; z-index: 10; display: flex; flex-direction: column; gap: 8px; }
+.flabel { font-size: 12px; color: var(--muted); }
+.srv { width: 100%; }
+.srv .lm-box { width: 100%; inset-inline-start: 0; }
+.srv.open .lm-box { width: 100%; height: var(--h, 214px); border-radius: 28px; }
+.srv .lm-bar { font-size: 14px; padding: 0 20px; }
+.srv .lm-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srv .lm-items { overflow-y: auto; padding: 4px 20px 16px; justify-content: flex-start; gap: 14px; }
+.srv .lm-item { flex: none; max-width: 100%; font-size: 15px; }
+.srv .lm-item[data-current="1"] { color: var(--teal); }
+.srv .lm-item:disabled { opacity: .4 !important; cursor: default; }
+.srv .lm-bar:disabled { cursor: default; opacity: .6; }
+.srv .lm-bar { display: flex; }
+.round { width: 40px; height: 40px; border-radius: 50%; color: var(--text); display: grid; place-items: center; cursor: pointer; transition: transform .15s; }
+.round:hover { transform: translateY(-1px); }
+.round:active { box-shadow: var(--inset); }

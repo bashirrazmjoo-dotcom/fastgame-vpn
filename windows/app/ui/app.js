@@ -105,21 +105,34 @@
   }
 
   function renderServers() {
-    const sel = $("server");
     const busy = snap.connection.phase !== "idle";
-    const want = snap.selected_server_id;
-    sel.replaceChildren(
-      ...snap.servers.map((s) => {
-        const o = document.createElement("option");
-        o.value = s.id;
-        const country = lang === "fa" ? s.country_name_fa : s.country_name_en;
-        o.textContent = `${country} — ${s.name}` + (s.supported ? "" : ` (${t("coming_soon")})`);
-        o.disabled = !s.supported;
-        o.selected = s.id === want;
-        return o;
+    const label = (sv) => `${lang === "fa" ? sv.country_name_fa : sv.country_name_en} — ${sv.name}`;
+    const cur = snap.servers.find((x) => x.id === snap.selected_server_id);
+    $("srv-title").textContent = cur ? label(cur) : t("choose_server");
+    const box = $("srv-items");
+    box.replaceChildren(
+      ...snap.servers.map((sv) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "lm-item"; b.tabIndex = -1; b.disabled = !sv.supported;
+        if (sv.id === snap.selected_server_id) b.dataset.current = "1";
+        const r = document.createElement("span"); r.className = "roll";
+        const text = label(sv) + (sv.supported ? "" : ` (${t("coming_soon")})`);
+        for (let i = 0; i < 2; i++) { const x = document.createElement("span"); x.textContent = text; r.append(x); }
+        b.append(r);
+        b.onclick = () => { setSrv(false); invoke("select_server", { id: sv.id }); };
+        return b;
       })
     );
-    sel.disabled = busy || snap.servers.length === 0;
+    const n = Math.max(1, snap.servers.length);
+    $("srv").style.setProperty("--h", Math.min(48 + n * 24 + (n - 1) * 14 + 28, 300) + "px");
+    $("srv-bar").disabled = busy || snap.servers.length === 0;
+    if (busy) setSrv(false);
+  }
+
+  function setSrv(open) {
+    $("srv").classList.toggle("open", open);
+    $("srv-bar").setAttribute("aria-expanded", String(open));
+    document.querySelectorAll("#srv-items .lm-item").forEach((b) => (b.tabIndex = open ? 0 : -1));
   }
 
   function renderConnect() {
@@ -175,9 +188,8 @@
   }
 
   function setMenu(open) {
-    $("lm").classList.toggle("open", open);
+    $("menu-panel").hidden = !open;
     $("btn-menu").setAttribute("aria-expanded", String(open));
-    document.querySelectorAll(".lm-item").forEach((b) => (b.tabIndex = open ? 0 : -1));
   }
 
   function toast(text) {
@@ -193,10 +205,11 @@
     const phase = snap.connection.phase;
     invoke(phase === "idle" ? "connect" : "disconnect");
   };
-  $("server").onchange = (e) => invoke("select_server", { id: Number(e.target.value) });
-  $("btn-menu").onclick = (e) => { e.stopPropagation(); setMenu(!$("lm").classList.contains("open")); };
+  $("btn-menu").onclick = (e) => { e.stopPropagation(); setMenu($("menu-panel").hidden); };
   document.addEventListener("click", (e) => { if (!e.target.closest(".menu")) setMenu(false); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { setMenu(false); setSrv(false); } });
+  $("srv-bar").onclick = (e) => { e.stopPropagation(); setSrv(!$("srv").classList.contains("open")); };
+  document.addEventListener("click", (e) => { if (!e.target.closest(".srv")) setSrv(false); });
   $("btn-lang").onclick = () => { setMenu(false); invoke("set_language", { lang: lang === "fa" ? "en" : "fa" }); };
   $("btn-theme").onclick = () => { setMenu(false); invoke("set_theme", { theme: snap.theme === "dark" ? "light" : "dark" }); };
   $("btn-vip").onclick = (e) => (e.currentTarget.dataset.action === "share" ? share() : invoke("open_link", { link: "vip" }));
