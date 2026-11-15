@@ -18,10 +18,28 @@
         <button class="round" id="btn-theme" data-i18n-title="change_theme" title="" aria-label="theme">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
         </button>
+        <button class="round" id="btn-share-round" data-i18n-title="share_app" title="" aria-label="share">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/></svg>
+        </button>
       </div>
       <h1 class="brand" dir="ltr">FastGame</h1>
       <span class="spacer"></span>
     </header>
+
+    <section class="card connect">
+      <button class="power" id="btn-connect" type="button">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg>
+      </button>
+      <div class="status" id="status"></div>
+      <div class="hint" id="hint"></div>
+    </section>
+
+    <section class="card server">
+      <label class="field">
+        <span data-i18n="label_server"></span>
+        <select id="server"></select>
+      </label>
+    </section>
 
     <section class="card timer" aria-live="off">
       <h2 data-i18n="time_card_title"></h2>
@@ -35,18 +53,6 @@
     </section>
 
     <section class="card messages" id="messages" hidden role="status" aria-live="polite"></section>
-
-    <section class="card connect">
-      <label class="field">
-        <span data-i18n="label_server"></span>
-        <select id="server"></select>
-      </label>
-      <button class="power" id="btn-connect" type="button">
-        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg>
-      </button>
-      <div class="status" id="status"></div>
-      <div class="hint" id="hint"></div>
-    </section>
 
     <section class="row">
       <button class="btn primary" id="btn-vip" data-i18n="buy_vip"></button>

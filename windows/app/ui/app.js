@@ -147,9 +147,25 @@
     renderTimer();
     $("id-row").hidden = !snap.account;
     if (snap.account) $("user-code").textContent = snap.account.user_code;
+    // A VIP has nothing to buy: the slot becomes "share" (same as Android).
+    const vip = $("btn-vip");
+    const isVip = !!snap.account && snap.account.is_vip;
+    vip.textContent = isVip ? t("share_short") : t("buy_vip");
+    vip.dataset.action = isVip ? "share" : "vip";
     const support = $("btn-support");
     support.textContent = snap.update_available ? t("update_app") : t("support");
     support.dataset.link = snap.update_available ? "update" : "support";
+  }
+
+  // Fixed install links (nothing here is opened by the host; the text is only shared or copied).
+  const SHARE_WIN = "https://github.com/bashirrazmjoo-dotcom/fastgame-vpn/releases/download/windows-latest/FastGame-Setup.exe";
+  const SHARE_ANDROID = "https://github.com/bashirrazmjoo-dotcom/fastgame-vpn/releases/download/stable/FastGameVPN.apk";
+  async function share() {
+    const text = t("share_text", SHARE_WIN, SHARE_ANDROID);
+    try {
+      if (navigator.share) { await navigator.share({ title: "FastGame VPN", text }); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(text); toast(t("share_copied")); } catch (_) {}
   }
 
   function toast(text) {
@@ -168,7 +184,8 @@
   $("server").onchange = (e) => invoke("select_server", { id: Number(e.target.value) });
   $("btn-lang").onclick = () => invoke("set_language", { lang: lang === "fa" ? "en" : "fa" });
   $("btn-theme").onclick = () => invoke("set_theme", { theme: snap.theme === "dark" ? "light" : "dark" });
-  $("btn-vip").onclick = () => invoke("open_link", { link: "vip" });
+  $("btn-vip").onclick = (e) => (e.currentTarget.dataset.action === "share" ? share() : invoke("open_link", { link: "vip" }));
+  $("btn-share-round").onclick = share;
   $("btn-support").onclick = (e) => invoke("open_link", { link: e.currentTarget.dataset.link });
   $("btn-privacy").onclick = () => invoke("open_link", { link: "privacy" });
   $("btn-copy").onclick = async () => {
