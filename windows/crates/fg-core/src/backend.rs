@@ -26,6 +26,18 @@ pub trait Store: Send + Sync {
     fn set_user_code(&self, code: &str);
 }
 
+impl<T: Store + ?Sized> Store for std::sync::Arc<T> {
+    fn device_token(&self) -> Option<String> {
+        (**self).device_token()
+    }
+    fn set_device_token(&self, token: Option<String>) {
+        (**self).set_device_token(token)
+    }
+    fn set_user_code(&self, code: &str) {
+        (**self).set_user_code(code)
+    }
+}
+
 pub struct BackendImpl<A: FastGameApi, S: Store> {
     api: A,
     store: S,
