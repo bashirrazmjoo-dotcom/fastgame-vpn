@@ -160,12 +160,23 @@
   // Fixed install links (nothing here is opened by the host; the text is only shared or copied).
   const SHARE_WIN = "https://github.com/bashirrazmjoo-dotcom/fastgame-vpn/releases/download/windows-latest/FastGame-Setup.exe";
   const SHARE_ANDROID = "https://github.com/bashirrazmjoo-dotcom/fastgame-vpn/releases/download/stable/FastGameVPN.apk";
+  // Copies the install links; the toast confirms it (Windows has no reliable share sheet in the webview).
   async function share() {
     const text = t("share_text", SHARE_WIN, SHARE_ANDROID);
     try {
-      if (navigator.share) { await navigator.share({ title: "FastGame VPN", text }); return; }
-    } catch (e) { if (e && e.name === "AbortError") return; }
-    try { await navigator.clipboard.writeText(text); toast(t("share_copied")); } catch (_) {}
+      await navigator.clipboard.writeText(text);
+      toast(t("share_copied"));
+    } catch (_) {
+      // Clipboard blocked: show the text so it can be copied by hand.
+      $("licenses-text").textContent = text;
+      $("licenses-dialog").querySelector("h3").textContent = t("share_app");
+      $("licenses-dialog").showModal();
+    }
+  }
+
+  function setMenu(open) {
+    $("menu-panel").hidden = !open;
+    $("btn-menu").setAttribute("aria-expanded", String(open));
   }
 
   function toast(text) {
@@ -182,16 +193,19 @@
     invoke(phase === "idle" ? "connect" : "disconnect");
   };
   $("server").onchange = (e) => invoke("select_server", { id: Number(e.target.value) });
-  $("btn-lang").onclick = () => invoke("set_language", { lang: lang === "fa" ? "en" : "fa" });
-  $("btn-theme").onclick = () => invoke("set_theme", { theme: snap.theme === "dark" ? "light" : "dark" });
+  $("btn-menu").onclick = (e) => { e.stopPropagation(); setMenu($("menu-panel").hidden); };
+  document.addEventListener("click", (e) => { if (!e.target.closest(".menu")) setMenu(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
+  $("btn-lang").onclick = () => { setMenu(false); invoke("set_language", { lang: lang === "fa" ? "en" : "fa" }); };
+  $("btn-theme").onclick = () => { setMenu(false); invoke("set_theme", { theme: snap.theme === "dark" ? "light" : "dark" }); };
   $("btn-vip").onclick = (e) => (e.currentTarget.dataset.action === "share" ? share() : invoke("open_link", { link: "vip" }));
-  $("btn-share-round").onclick = share;
+  $("btn-share-round").onclick = () => { setMenu(false); share(); };
   $("btn-support").onclick = (e) => invoke("open_link", { link: e.currentTarget.dataset.link });
   $("btn-privacy").onclick = () => invoke("open_link", { link: "privacy" });
   $("btn-copy").onclick = async () => {
     try { await navigator.clipboard.writeText(snap.account.user_code); toast(t("id_copied")); } catch (_) {}
   };
-  $("btn-licenses").onclick = () => { $("licenses-text").textContent = t("licenses_body"); $("licenses-dialog").showModal(); };
+  $("btn-licenses").onclick = () => { $("licenses-dialog").querySelector("h3").textContent = t("licenses"); $("licenses-text").textContent = t("licenses_body"); $("licenses-dialog").showModal(); };
   $("btn-licenses-close").onclick = () => $("licenses-dialog").close();
   $("messages").addEventListener("click", () => { if (snap.connection.notice && snap.connection.phase === "idle") invoke("dismiss_notice"); });
 
