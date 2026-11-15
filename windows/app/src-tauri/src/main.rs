@@ -98,6 +98,54 @@ fn build_core() -> Result<Arc<AppCore>, String> {
     Ok(AppCore::new(backend, controller, store, config::version_code(), false))
 }
 
+/// Disconnect first so the tunnel and the session end cleanly, then exit.
+fn quit_gracefully(app: tauri::AppHandle) {
+    let core = app.state::<Core>().0.clone();
+    tauri::async_runtime::spawn(async move {
+        if core.snapshot().connection.phase != Phase::Idle {
+            core.disconnect();
+            let mut rx = core.subscribe();
+            let _ = tokio::time::timeout(Duration::from_secs(8), rx.wait_for(|s| s.connection.phase == Phase::Idle)).await;
+        }
+        app.exit(0);
+    });
+}
+
+fn show_main(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.show();
+        let _ = w.unminimize();
+        let _ = w.set_focus();
+    }
+}
+
+fn build_tray(app: &tauri::App) -> tauri::Result<()> {
+    use tauri::menu::{Menu, MenuItem};
+    use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+    let open = MenuItem::with_id(app, "open", "FastGame", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit / خروج", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&open, &quit])?;
+    let mut tray = TrayIconBuilder::new()
+        .tooltip("FastGame")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "open" => show_main(app),
+            "quit" => quit_gracefully(app.clone()),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = event {
+                show_main(tray.app_handle());
+            }
+        });
+    if let Some(icon) = app.default_window_icon() {
+        tray = tray.icon(icon.clone());
+    }
+    tray.build(app)?;
+    Ok(())
+}
+
 /// The release build has no console, so a startup failure would otherwise be silent.
 /// Write it to %APPDATA%\\FastGame\\crash.log and show it in a message box.
 fn install_crash_report() {
@@ -138,23 +186,14 @@ fn main() {
                 }
             });
             app.manage(Core(core));
+            build_tray(app)?;
             Ok(())
         })
         .on_window_event(|window, event| {
-            // Closing the window while connected: disconnect first so the tunnel and the session end cleanly.
+            // The close button only minimizes: the tunnel keeps running. "Quit" in the tray icon menu ends the app.
             if let WindowEvent::CloseRequested { api, .. } = event {
-                let core = window.state::<Core>().0.clone();
-                if core.snapshot().connection.phase == Phase::Idle {
-                    return;
-                }
                 api.prevent_close();
-                let app = window.app_handle().clone();
-                tauri::async_runtime::spawn(async move {
-                    core.disconnect();
-                    let mut rx = core.subscribe();
-                    let _ = tokio::time::timeout(Duration::from_secs(8), rx.wait_for(|s| s.connection.phase == Phase::Idle)).await;
-                    app.exit(0);
-                });
+                let _ = window.minimize();
             }
         })
         .invoke_handler(tauri::generate_handler![
