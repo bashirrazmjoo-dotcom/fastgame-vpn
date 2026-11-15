@@ -87,18 +87,11 @@ class MainViewModel(private val container: AppContainer) : ViewModel() {
     fun selectServer(id: Int) {
         container.prefs.lastServerId = id
         _ui.update { it.copy(selectedServerId = id) }
-        // Picking another server while connected: drop the current session and connect to the new one.
+        // Picking another server while connected: the controller ends this session and starts the new one.
         val conn = container.connection
         val now = conn.state.value
         if (now.phase != Phase.IDLE && now.serverId != id) {
-            viewModelScope.launch {
-                conn.disconnect()
-                conn.state.first { it.phase == Phase.IDLE }
-                repeat(10) {
-                    if (startConnection()) return@launch
-                    delay(150)
-                }
-            }
+            _ui.value.selectedServer?.let { conn.switchServer(it) }
         }
     }
 

@@ -99,7 +99,19 @@ class ConnectionControllerTest {
         advanceTimeBy(200_000); runCurrent()
         assertEquals(Phase.IDLE, c.state.value.phase)
         assertEquals(Notice.EngineFailed("boom"), c.state.value.notice)
-        assertEquals(2, b.stops) // engine errors are reported after two attempts, not hidden behind a spinner
+        assertEquals(6, b.stops) // OpenVPN keeps its patient retries
+    }
+
+    @Test fun switchingServerEndsOldSessionThenConnectsToNewOne() = runTest {
+        val b = FakeBackend(); val e = FakeEngine(); val c = controller(b, e)
+        c.connect(server); runCurrent()
+        assertEquals(Phase.CONNECTED, c.state.value.phase)
+        val other = server.copy(id = server.id + 1)
+        c.switchServer(other); runCurrent()
+        assertEquals(1, b.stops)
+        assertEquals(Phase.CONNECTED, c.state.value.phase)
+        assertEquals(other.id, c.state.value.serverId)
+        c.disconnect(); runCurrent()
     }
 
     @Test fun tunnelDropReconnectsByItself() = runTest {

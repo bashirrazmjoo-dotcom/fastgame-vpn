@@ -12,6 +12,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,6 +76,7 @@ class ConnectionController(
             }
         }
     }
+    private var xrayInUse = false
     private var anchorRemaining: Long? = null
     private var anchorAtMillis: Long = 0L
 
@@ -84,6 +86,23 @@ class ConnectionController(
         _state.value = ConnectionState(phase = Phase.STARTING, serverId = server.id)
         job = scope.launch { runSession(server) }
         return true
+    }
+
+    /**
+     * Switches to another server: ends the running session completely (including the server-side
+     * cleanup) and only then starts the new one. Runs in the controller's own scope so it finishes even if
+     * the screen goes away halfway.
+     */
+    fun switchServer(server: VpnServerInfo) {
+        val old = job
+        job = scope.launch {
+            if (old?.isActive == true) {
+                _state.update { it.copy(phase = Phase.DISCONNECTING) }
+                old.cancelAndJoin()
+            }
+            runSession(server)
+        }
+        _state.value = ConnectionState(phase = Phase.STARTING, serverId = server.id)
     }
 
     fun disconnect() {
@@ -112,7 +131,8 @@ class ConnectionController(
                 if (notice is Notice.QuotaExhausted || notice is Notice.Blocked) { finalNotice = notice; return }
                 failures = if (outcome.wasConnected) 0 else failures + 1
                 val offline = notice is Notice.NetworkLost
-                val limit = if (notice is Notice.EngineFailed || notice is Notice.ServiceError) MAX_ENGINE_FAILURES else MAX_FAILED_ATTEMPTS
+                // Xray errors are reported quickly so the reason is visible; OpenVPN keeps its patient retries.
+                val limit = if (xrayInUse && (notice is Notice.EngineFailed || notice is Notice.ServiceError)) MAX_ENGINE_FAILURES else MAX_FAILED_ATTEMPTS
                 if (!offline && failures >= limit) { finalNotice = notice; return }
                 _state.value = ConnectionState(phase = Phase.STARTING, serverId = server.id, remainingSeconds = _state.value.remainingSeconds, isVip = _state.value.isVip)
                 delay(backoffMillis(failures))
@@ -137,6 +157,7 @@ class ConnectionController(
             anchor(started.isVip, started.remainingSeconds)
             _state.update { it.copy(phase = Phase.CONNECTING) }
 
+            xrayInUse = started.xrayLink != null
             val profile = VpnProfile(server.name, started.ovpnConfig, started.authUsername, started.authPassword, started.xrayLink)
             withTimeoutOrNull(CONNECT_TIMEOUT_MS) { engine.connect(profile) }
                 ?: throw EngineException(
