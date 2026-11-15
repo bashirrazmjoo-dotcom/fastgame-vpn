@@ -98,7 +98,27 @@ fn build_core() -> Result<Arc<AppCore>, String> {
     Ok(AppCore::new(backend, controller, store, config::version_code(), false))
 }
 
+/// The release build has no console, so a startup failure would otherwise be silent.
+/// Write it to %APPDATA%\\FastGame\\crash.log and show it in a message box.
+fn install_crash_report() {
+    std::panic::set_hook(Box::new(|info| {
+        let text = format!("{info}\n\n{}", std::backtrace::Backtrace::force_capture());
+        let dir = data_dir();
+        let _ = std::fs::create_dir_all(&dir);
+        let _ = std::fs::write(dir.join("crash.log"), &text);
+        #[cfg(windows)]
+        {
+            use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK};
+            let wide = |s: &str| s.encode_utf16().chain(std::iter::once(0)).collect::<Vec<u16>>();
+            let short: String = format!("{info}").chars().take(600).collect();
+            let msg = format!("FastGame could not start.\n\n{short}\n\nDetails: {}", dir.join("crash.log").display());
+            unsafe { MessageBoxW(std::ptr::null_mut(), wide(&msg).as_ptr(), wide("FastGame").as_ptr(), MB_OK | MB_ICONERROR) };
+        }
+    }));
+}
+
 fn main() {
+    install_crash_report();
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             if let Some(w) = app.get_webview_window("main") {
