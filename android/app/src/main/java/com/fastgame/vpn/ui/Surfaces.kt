@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -106,7 +107,7 @@ fun GlassButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifie
                     val band = w * 0.45f
                     val x = -band + p * (w + band * 2f)
                     val tint = if (Pal.light) Pal.accent.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.30f)
-                    androidx.compose.ui.graphics.drawscope.rotate(18f, Offset(size.width / 2, size.height / 2)) {
+                    rotate(18f, Offset(size.width / 2, size.height / 2)) {
                         drawRect(
                             Brush.horizontalGradient(listOf(Color.Transparent, tint, Color.Transparent), startX = x, endX = x + band),
                             topLeft = Offset(x, -size.height), size = androidx.compose.ui.geometry.Size(band, size.height * 3f),
