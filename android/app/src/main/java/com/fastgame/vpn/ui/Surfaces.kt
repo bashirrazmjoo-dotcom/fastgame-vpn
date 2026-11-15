@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -79,6 +80,14 @@ fun Modifier.modernCard(corner: Dp = 16.dp): Modifier = this
 fun GlassButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
+    // Sheen: a soft bright band sweeps across the button each time it is touched.
+    val sheen = remember { androidx.compose.animation.core.Animatable(1f) }
+    androidx.compose.runtime.LaunchedEffect(pressed) {
+        if (pressed) {
+            sheen.snapTo(0f)
+            sheen.animateTo(1f, tween(650, easing = androidx.compose.animation.core.CubicBezierEasing(0.22f, 1f, 0.36f, 1f)))
+        }
+    }
     Box(
         modifier
             .height(52.dp)
@@ -88,6 +97,23 @@ fun GlassButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifie
                 scaleY = s
             }
             .modernCard(16.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .drawWithContent {
+                drawContent()
+                val p = sheen.value
+                if (p < 1f) {
+                    val w = size.width
+                    val band = w * 0.45f
+                    val x = -band + p * (w + band * 2f)
+                    val tint = if (Pal.light) Pal.accent.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.30f)
+                    androidx.compose.ui.graphics.drawscope.rotate(18f, Offset(size.width / 2, size.height / 2)) {
+                        drawRect(
+                            Brush.horizontalGradient(listOf(Color.Transparent, tint, Color.Transparent), startX = x, endX = x + band),
+                            topLeft = Offset(x, -size.height), size = androidx.compose.ui.geometry.Size(band, size.height * 3f),
+                        )
+                    }
+                }
+            }
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
