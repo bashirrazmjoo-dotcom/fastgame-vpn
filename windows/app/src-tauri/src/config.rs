@@ -4,7 +4,7 @@
 pub const API_BASE_URL: &str = "https://fg.razmjou.com/";
 pub const API_FALLBACK_URL: &str = "https://93.126.31.20:24443/";
 pub const API_FALLBACK_HOST: &str = "fg.razmjou.com";
-pub const API_FALLBACK_CERT_SHA256: &str = "";
+pub const API_FALLBACK_CERT_SHA256: &str = "435B7DB62EB5E4DFA969EE216F935E1E8FE21F62393D5C38ACA464610796912E";
 
 /// Version code sent to the backend: major*10000 + minor*100 + patch of Cargo's version.
 pub fn version_code() -> u32 {
