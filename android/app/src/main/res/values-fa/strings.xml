@@ -71,4 +71,7 @@
     <string name="time_card_note">زمان باقی‌مانده تا پایان مهلت دسترسی به برنامه</string>
     <string name="time_active">فعال</string>
     <string name="time_expired">پایان یافته</string>
+    <string name="share_short">اشتراک‌گذاری</string>
+    <string name="share_app">اشتراک‌گذاری برنامه</string>
+    <string name="share_text">FastGame VPN، سریع و مخصوص بازی.\n%1$s</string>
 </resources>

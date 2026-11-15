@@ -65,6 +65,7 @@ class HomeActions(
     val onCopyId: (String) -> Unit,
     val onCopyText: (String) -> Unit,
     val onBuyVip: () -> Unit,
+    val onShare: () -> Unit,
     val onSupport: () -> Unit,
     val onUpdate: () -> Unit,
     val onPrivacy: () -> Unit,
@@ -143,6 +144,9 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (account?.isVip != true) {
                 GlassButton(stringResource(R.string.buy_vip), actions.onBuyVip, Modifier.weight(1f))
+            } else {
+                // A VIP has nothing to buy: the slot becomes "share".
+                GlassButton(stringResource(R.string.share_short), actions.onShare, Modifier.weight(1f))
             }
             // Support only while the app is up to date; otherwise the same slot offers the update.
             val outdated = ui.config?.let { it.latestVersionCode > com.fastgame.vpn.BuildConfig.APP_VERSION_CODE && it.updateUrl.isNotBlank() } == true
@@ -171,6 +175,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         items = listOf(
             FluidItem(if (fa) "EN" else "فا", stringResource(R.string.change_language), actions.onToggleLanguage),
             FluidItem("", stringResource(R.string.change_theme), actions.onToggleTheme) { ThemeGlyph(sun = !Pal.light, color = Pal.text) },
+            FluidItem("", stringResource(R.string.share_app), actions.onShare) { ShareGlyph(Pal.text) },
         ),
         modifier = Modifier.align(Alignment.TopEnd).padding(top = 48.dp, end = 20.dp),
     )

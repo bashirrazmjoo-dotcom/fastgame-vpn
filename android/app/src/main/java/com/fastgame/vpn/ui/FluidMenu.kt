@@ -131,3 +131,16 @@ fun ThemeGlyph(sun: Boolean, color: Color) {
         }
     }
 }
+
+/** Share symbol: three nodes joined by two lines. */
+@Composable
+fun ShareGlyph(color: Color) {
+    Canvas(Modifier.size(22.dp)) {
+        val w = size.width
+        val a = Offset(w * 0.78f, w * 0.2f); val b = Offset(w * 0.22f, w * 0.5f); val c = Offset(w * 0.78f, w * 0.8f)
+        val stroke = 1.8.dp.toPx()
+        drawLine(color, a, b, stroke, StrokeCap.Round)
+        drawLine(color, b, c, stroke, StrokeCap.Round)
+        for (p in listOf(a, b, c)) drawCircle(color, radius = w * 0.13f, center = p)
+    }
+}

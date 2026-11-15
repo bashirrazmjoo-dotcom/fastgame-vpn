@@ -30,6 +30,7 @@ import com.fastgame.vpn.vpn.Phase
 import java.util.Locale
 
 private const val SUPPORT_URL = "https://t.me/fastgamevpn"
+private const val SHARE_URL = "https://github.com/bashirrazmjoo-dotcom/fastgame-vpn/releases/download/stable/FastGameVPN.apk"
 
 class MainActivity : AppCompatActivity() {
 
@@ -37,6 +38,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // First launch: Persian unless a language was already chosen.
+        if (AppCompatDelegate.getApplicationLocales().isEmpty) AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("fa"))
         val uiPrefs = getSharedPreferences("ui", MODE_PRIVATE)
         com.fastgame.vpn.ui.Pal.light = uiPrefs.getBoolean("light", false)
         setContent {
@@ -90,6 +93,14 @@ class MainActivity : AppCompatActivity() {
                     },
                     onBuyVip = { ui.account?.let { openInCustomTab(it.vipPurchaseUrl) } },
                     onSupport = { open(SUPPORT_URL) },
+                    onShare = {
+                        val link = ui.config?.updateUrl?.takeIf { it.isNotBlank() } ?: SHARE_URL
+                        val send = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text, link))
+                        }
+                        startActivity(Intent.createChooser(send, getString(R.string.share_app)))
+                    },
                     onUpdate = { ui.config?.updateUrl?.takeIf { it.isNotBlank() }?.let { open(it) } },
                     onPrivacy = { ui.config?.let { open(it.privacyPolicyUrl) } },
                     onToggleLanguage = {

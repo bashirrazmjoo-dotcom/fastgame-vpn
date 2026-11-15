@@ -71,4 +71,7 @@
     <string name="time_card_note">Time left until access ends</string>
     <string name="time_active">Active</string>
     <string name="time_expired">Ended</string>
+    <string name="share_short">Share</string>
+    <string name="share_app">Share the app</string>
+    <string name="share_text">FastGame VPN: fast and built for gaming.\n%1$s</string>
 </resources>
