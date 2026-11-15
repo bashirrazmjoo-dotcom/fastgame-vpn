@@ -100,6 +100,7 @@ class ConnectionController(
                 _state.update { it.copy(phase = Phase.DISCONNECTING) }
                 old.cancelAndJoin()
             }
+            _state.value = ConnectionState(phase = Phase.STARTING, serverId = server.id)
             runSession(server)
         }
         _state.value = ConnectionState(phase = Phase.STARTING, serverId = server.id)
