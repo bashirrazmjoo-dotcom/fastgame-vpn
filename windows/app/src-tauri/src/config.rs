@@ -12,3 +12,8 @@ pub fn version_code() -> u32 {
     let (a, b, c) = (p.next().unwrap_or(0), p.next().unwrap_or(0), p.next().unwrap_or(0));
     (a * 10_000 + b * 100 + c).max(1)
 }
+
+/// Commit this build was made from (set by CI); "dev" for local builds, which never offer updates.
+pub fn build_sha() -> &'static str {
+    option_env!("FG_BUILD_SHA").unwrap_or("dev")
+}

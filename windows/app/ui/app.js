@@ -6,6 +6,7 @@
 
   let snap = null;
   let lang = "fa";
+  let updateReady = false; // a newer build exists
   let received = 0; // Date.now() when the last snapshot arrived
 
   const t = (key, ...args) => {
@@ -87,12 +88,19 @@
     if (a && a.is_blocked && !(conn.notice && conn.notice.kind === "blocked")) lines.push({ text: t("notice_blocked") });
     if (a && !a.is_vip && a.remaining_seconds <= 0 && conn.phase === "idle" && !(conn.notice && conn.notice.kind === "quota_exhausted")) lines.push({ text: t("free_time_over") });
     if (snap.update_available) lines.push({ text: t("update_required") });
+    if (updateReady) lines.push({ text: t("update_new"), action: "update" });
     if (!snap.loading && !snap.load_error && snap.servers.length && !snap.servers.some((s) => s.supported)) lines.push({ text: t("no_servers") });
     box.hidden = lines.length === 0;
     box.replaceChildren(
       ...lines.map((l) => {
         const p = document.createElement("p");
         p.textContent = l.text;
+        if (l.action === "update") {
+          const b = document.createElement("button");
+          b.className = "btn"; b.textContent = t("update_now");
+          b.onclick = (e) => { e.stopPropagation(); doUpdate(); };
+          p.append(document.createElement("br"), b);
+        }
         if (l.action === "retry") {
           const b = document.createElement("button");
           b.className = "btn"; b.textContent = t("retry");
@@ -192,11 +200,30 @@
     $("btn-menu").setAttribute("aria-expanded", String(open));
   }
 
-  function toast(text) {
+  function setUpdateReady(v) {
+    updateReady = v;
+    $("update-dot").hidden = !v;
+    if (snap) renderMessages();
+  }
+  async function doUpdate() {
+    toast(t("update_downloading"), 60000);
+    try { await invoke("install_update"); } catch (_) { toast(t("update_failed"), 4000); }
+  }
+  async function updateFromMenu() {
+    if (updateReady) return doUpdate();
+    toast(t("update_checking"), 15000);
+    try {
+      const newer = await invoke("check_update");
+      setUpdateReady(newer);
+      if (newer) { toast(t("update_new"), 2500); doUpdate(); } else toast(t("update_none"), 2500);
+    } catch (_) { toast(t("update_check_failed"), 3000); }
+  }
+
+  function toast(text, ms = 1800) {
     const el = $("toast");
     el.textContent = text; el.hidden = false;
     clearTimeout(toast.h);
-    toast.h = setTimeout(() => (el.hidden = true), 1800);
+    toast.h = setTimeout(() => (el.hidden = true), ms);
   }
 
   function onSnapshot(s) { snap = s; received = Date.now(); render(); }
@@ -214,6 +241,7 @@
   $("btn-theme").onclick = () => { setMenu(false); invoke("set_theme", { theme: snap.theme === "dark" ? "light" : "dark" }); };
   $("btn-vip").onclick = (e) => (e.currentTarget.dataset.action === "share" ? share() : invoke("open_link", { link: "vip" }));
   $("btn-share-round").onclick = () => { setMenu(false); share(); };
+  $("btn-update").onclick = () => { setMenu(false); updateFromMenu(); };
   $("btn-support").onclick = (e) => invoke("open_link", { link: e.currentTarget.dataset.link });
   $("btn-privacy").onclick = () => invoke("open_link", { link: "privacy" });
   // Copy button: the row blurs out, a confirmation with a progress fill shows for 4 s, then it returns.
@@ -238,11 +266,25 @@
   $("btn-licenses-close").onclick = () => $("licenses-dialog").close();
   $("messages").addEventListener("click", () => { if (snap.connection.notice && snap.connection.phase === "idle") invoke("dismiss_notice"); });
 
+  // Cards: soft cursor light and a slight 3D tilt (skipped for reduced motion).
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.querySelectorAll(".card").forEach((k) => {
+      k.addEventListener("pointermove", (e) => {
+        const r = k.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5;
+        k.style.setProperty("--mx", `${e.clientX - r.left}px`); k.style.setProperty("--my", `${e.clientY - r.top}px`);
+        if (!k.querySelector(".open")) k.style.transform = `perspective(900px) rotateX(${(-py * 5).toFixed(2)}deg) rotateY(${(px * 5).toFixed(2)}deg)`;
+      });
+      k.addEventListener("pointerleave", () => { k.style.transform = ""; });
+    });
+  }
+
   setInterval(renderTimer, 1000);
 
   applyStatic();
   if (T) {
     T.event.listen("snapshot", (e) => onSnapshot(e.payload));
+    T.event.listen("update_found", () => setUpdateReady(true));
     invoke("snapshot").then(onSnapshot).then(() => invoke("refresh"));
   }
   window.__fgRender = onSnapshot; // used by the visual tests

@@ -59,6 +59,7 @@ Filename: "{sys}\sc.exe"; Parameters: "description FastGameVPN ""Creates the Fas
 Filename: "{sys}\sc.exe"; Parameters: "failure FastGameVPN reset= 86400 actions= restart/5000/restart/5000/restart/30000"; Flags: runhidden waituntilterminated
 Filename: "{sys}\sc.exe"; Parameters: "start FastGameVPN"; Flags: runhidden waituntilterminated
 Filename: "{app}\FastGame.exe"; Description: "Start FastGame"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\FastGame.exe"; Flags: nowait runasoriginaluser; Check: WizardSilent
 
 [UninstallRun]
 Filename: "{sys}\sc.exe"; Parameters: "stop FastGameVPN"; Flags: runhidden waituntilterminated; RunOnceId: "StopSvc"

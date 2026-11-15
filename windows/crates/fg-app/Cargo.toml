@@ -13,6 +13,7 @@ serde_json = { workspace = true }
 async-trait = { workspace = true }
 sha2 = "0.10"
 hex = "0.4"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls-no-provider", "json"] }
 uuid = { version = "1", features = ["v4"] }
 
 [target.'cfg(windows)'.dependencies]

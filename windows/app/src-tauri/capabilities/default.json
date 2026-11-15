@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "The page may call our own commands and listen to events; it gets no file, shell or opener access.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "notification:default"]
 }

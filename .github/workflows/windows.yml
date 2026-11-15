@@ -60,6 +60,7 @@ jobs:
       - name: Tests (includes the Windows-only service code)
         run: cargo test --locked
       - name: Build
+        env: { FG_BUILD_SHA: "${{ github.sha }}" }
         run: |
           cargo build --release --locked -p fg-service
           cargo build --release --locked -p fastgame --features custom-protocol
@@ -100,7 +101,8 @@ jobs:
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
           cp dist/FastGame-Setup-*.exe dist/FastGame-Setup.exe
+          SUM=$(sha256sum dist/FastGame-Setup.exe | cut -d' ' -f1)
           gh release delete windows-latest --yes --cleanup-tag || true
+          NOTES="Automatic build of the latest main commit ${GITHUB_SHA:0:7}. Unsigned."$'\n\n'"sha256: ${SUM}"
           gh release create windows-latest dist/FastGame-Setup.exe --prerelease --target "${GITHUB_SHA}" \
-            --title "FastGame for Windows (latest build)" \
-            --notes "Automatic build of the latest main commit ${GITHUB_SHA:0:7}. Unsigned."
+            --title "FastGame for Windows (latest build)" --notes "$NOTES"

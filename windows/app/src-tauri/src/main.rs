@@ -10,6 +10,7 @@ use std::time::Duration;
 use fg_app::app::{AppCore, Link, Snapshot};
 use fg_app::machine;
 use fg_app::store::FileStore;
+use fg_app::updater;
 use fg_core::api::{FallbackRoute, HttpApi};
 use fg_core::backend::BackendImpl;
 use fg_core::controller::{ConnectionController, Phase};
@@ -19,6 +20,78 @@ use tauri::{Emitter, Manager, State, WindowEvent};
 use tauri_plugin_opener::OpenerExt;
 
 struct Core(Arc<AppCore>);
+
+/// The newest release seen by the update check.
+#[derive(Default)]
+struct Updates {
+    latest: std::sync::Mutex<Option<updater::ReleaseInfo>>,
+}
+
+/// Checks GitHub for a newer build. `true` when one is available.
+async fn check_for_update(app: &tauri::AppHandle) -> Result<bool, String> {
+    let info = updater::fetch_latest().await?;
+    let newer = updater::is_update(config::build_sha(), &info.commit);
+    *app.state::<Updates>().latest.lock().unwrap() = Some(info);
+    Ok(newer)
+}
+
+#[tauri::command]
+async fn check_update(app: tauri::AppHandle) -> Result<bool, String> {
+    check_for_update(&app).await
+}
+
+/// Downloads, verifies and starts the installer, then exits so the installer can replace the files.
+#[tauri::command]
+async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    let cached = app.state::<Updates>().latest.lock().unwrap().clone();
+    let info = match cached {
+        Some(i) => i,
+        None => updater::fetch_latest().await?,
+    };
+    if !updater::is_update(config::build_sha(), &info.commit) {
+        return Err("already up to date".into());
+    }
+    let path = updater::download(&info).await?;
+    launch_installer(&path)?;
+    quit_gracefully(app);
+    Ok(())
+}
+
+#[cfg(windows)]
+fn launch_installer(path: &std::path::Path) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+    // `start` goes through ShellExecute, which shows the UAC prompt the installer needs.
+    std::process::Command::new("cmd")
+        .args(["/C", "start", "", &path.to_string_lossy(), "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART"])
+        .creation_flags(0x0800_0000)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+#[cfg(not(windows))]
+fn launch_installer(_: &std::path::Path) -> Result<(), String> {
+    Err("updates are only supported on Windows".into())
+}
+
+/// Once a day: look for a new build and, the first time one shows up, tell the user.
+async fn daily_update_check(app: tauri::AppHandle) {
+    tokio::time::sleep(Duration::from_secs(30)).await;
+    let mut announced: Option<String> = None;
+    loop {
+        if let Ok(true) = check_for_update(&app).await {
+            let commit = app.state::<Updates>().latest.lock().unwrap().as_ref().map(|i| i.commit.clone());
+            if commit != announced {
+                announced = commit;
+                let _ = app.emit("update_found", true);
+                let fa = app.state::<Core>().0.snapshot().language == "fa";
+                let (title, body) = if fa { ("FastGame", "نسخه‌ی جدید برنامه آمده است. از منو به‌روزرسانی کنید.") } else { ("FastGame", "A new version is available. Update from the menu.") };
+                let _ = tauri_plugin_notification::NotificationExt::notification(&app).builder().title(title).body(body).show();
+            }
+        }
+        tokio::time::sleep(Duration::from_secs(24 * 60 * 60)).await;
+    }
+}
 
 #[tauri::command]
 async fn snapshot(core: State<'_, Core>) -> Result<Snapshot, ()> {
@@ -175,6 +248,8 @@ fn main() {
             }
         }))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
+        .manage(Updates::default())
         .setup(|app| {
             let core = tauri::async_runtime::block_on(async { build_core() })?;
             let mut rx = core.subscribe();
@@ -187,6 +262,7 @@ fn main() {
             });
             app.manage(Core(core));
             build_tray(app)?;
+            tauri::async_runtime::spawn(daily_update_check(app.handle().clone()));
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -197,7 +273,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            snapshot, refresh, connect, disconnect, dismiss_notice, select_server, set_language, set_theme, open_link
+            snapshot, refresh, connect, disconnect, dismiss_notice, select_server, set_language, set_theme, open_link, check_update, install_update
         ])
         .run(tauri::generate_context!())
         .expect("error while running FastGame");
