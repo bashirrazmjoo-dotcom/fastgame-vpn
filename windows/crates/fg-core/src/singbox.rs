@@ -49,10 +49,14 @@ pub fn build(link: &VlessLink, server_ip: IpAddr, opts: &TunOptions) -> Result<V
         "log": { "level": "info", "timestamp": true },
         "dns": {
             "servers": [
-                // Every lookup goes through the VPN server, so DNS never leaves on the physical network.
-                { "type": "udp", "tag": "dns-remote", "server": opts.dns_server.to_string(), "detour": PROXY_TAG }
+                // Every lookup goes through the VPN server (over TCP: UDP relaying through the proxy is not
+                // guaranteed), so DNS never leaves on the physical network.
+                { "type": "tcp", "tag": "dns-remote", "server": opts.dns_server.to_string(), "detour": PROXY_TAG }
             ],
-            "final": "dns-remote"
+            "final": "dns-remote",
+            // The VPN server and the tunnel are IPv4-only for lookups; AAAA answers would make browsers
+            // try IPv6 paths that do not exist and look "offline".
+            "strategy": "ipv4_only"
         },
         "inbounds": [{
             "type": "tun",
