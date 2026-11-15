@@ -94,18 +94,19 @@
     box.replaceChildren(
       ...lines.map((l) => {
         const p = document.createElement("p");
-        p.textContent = l.text;
+        p.insertAdjacentHTML("afterbegin", '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>');
+        const span = document.createElement("span"); span.textContent = l.text; p.append(span);
         if (l.action === "update") {
           const b = document.createElement("button");
           b.className = "btn"; b.textContent = t("update_now");
           b.onclick = (e) => { e.stopPropagation(); doUpdate(); };
-          p.append(document.createElement("br"), b);
+          span.append(document.createElement("br"), b);
         }
         if (l.action === "retry") {
           const b = document.createElement("button");
           b.className = "btn"; b.textContent = t("retry");
           b.onclick = () => invoke("refresh");
-          p.append(document.createElement("br"), b);
+          span.append(document.createElement("br"), b);
         }
         return p;
       })
@@ -132,7 +133,7 @@
       })
     );
     const n = Math.max(1, snap.servers.length);
-    $("srv").style.setProperty("--h", Math.min(48 + n * 24 + (n - 1) * 14 + 28, 300) + "px");
+    $("srv").style.setProperty("--h", Math.min(48 + n * 44 + 12, 320) + "px");
     $("srv-bar").disabled = busy || snap.servers.length === 0;
     if (busy) setSrv(false);
   }
