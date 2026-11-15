@@ -1,0 +1,91 @@
+name: Windows
+
+on:
+  push:
+    branches: [main]
+    paths: ["windows/**", ".github/workflows/windows.yml"]
+    tags: ["windows-v*"]
+  pull_request:
+    paths: ["windows/**", ".github/workflows/windows.yml"]
+  workflow_dispatch:
+
+env:
+  SING_BOX_VERSION: "1.14.4"
+  # SHA-256 of sing-box-<version>-windows-amd64.zip as downloaded from the official release.
+  SING_BOX_WIN_SHA256: "99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df"
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Logic tests and a real `sing-box check` of generated configs. Fast, runs on every change.
+  test-linux:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: windows } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: windows }
+      - run: cargo test --locked
+      - name: Validate generated sing-box configs with the real sing-box
+        run: |
+          curl -fsSL -o sb.tgz "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
+          tar -xzf sb.tgz
+          SB=$(ls sing-box-*/sing-box)
+          ID=11111111-2222-3333-4444-555555555555
+          KEY=7GzxM3m9k1vQ2sQw8d0cY5yE3b4uH6nJ1aXvT9rKpUo
+          i=0
+          for q in \
+            "type=tcp&security=reality&sni=www.example.com&pbk=$KEY&sid=ab12cd34&fp=chrome&flow=xtls-rprx-vision" \
+            "type=ws&path=%2Fws&host=cdn.example.org&security=tls&sni=cdn.example.org&fp=chrome&alpn=h2,http/1.1" \
+            "type=grpc&serviceName=svc&security=tls&sni=cdn.example.org" \
+            "type=httpupgrade&path=/u&security=none" \
+            "type=tcp"; do
+            i=$((i+1))
+            cargo run -q --locked -p fg-core --example dump_config -- "vless://$ID@vpn.example.org:443?$q" 203.0.113.7 > c$i.json
+            "$SB" check -c c$i.json
+          done
+
+  build-windows:
+    needs: test-linux
+    runs-on: windows-latest
+    defaults: { run: { working-directory: windows, shell: bash } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: windows }
+      - name: Tests (includes the Windows-only service code)
+        run: cargo test --locked
+      - name: Build
+        run: |
+          cargo build --release --locked -p fg-service
+          cargo build --release --locked -p fastgame --features custom-protocol
+      - name: Fetch sing-box and WebView2 bootstrapper
+        run: |
+          mkdir -p stage dl
+          curl -fsSL -o dl/sb.zip "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-windows-amd64.zip"
+          echo "${SING_BOX_WIN_SHA256}  dl/sb.zip" | sha256sum -c -
+          unzip -q dl/sb.zip -d dl
+          cp dl/sing-box-*/sing-box.exe dl/sing-box-*/libcronet.dll stage/
+          cp dl/sing-box-*/LICENSE dl/sing-box.LICENSE
+          curl -fsSL -o stage/MicrosoftEdgeWebview2Setup.exe "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+      - name: Stage files
+        run: |
+          cp target/release/FastGame.exe target/release/fastgame-service.exe stage/
+          cp app/src-tauri/icons/icon.ico stage/icon.ico
+          cp ../LICENSE stage/LICENSE.txt
+          python scripts/gen_third_party.py dl/sing-box.LICENSE stage/THIRD-PARTY-LICENSES.txt
+          cat licenses/Vazirmatn-OFL.txt >> stage/THIRD-PARTY-LICENSES.txt
+      - name: Installer
+        run: |
+          VERSION=$(grep -m1 '^version' Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')
+          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" "/DAppVersion=$VERSION" "/DStage=..\\stage" installer/fastgame.iss
+          ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FastGame-Windows-Setup
+          path: windows/dist/FastGame-Setup-*.exe
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/windows-v')
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh release create "${GITHUB_REF_NAME}" dist/FastGame-Setup-*.exe --title "FastGame for Windows ${GITHUB_REF_NAME#windows-v}" --generate-notes

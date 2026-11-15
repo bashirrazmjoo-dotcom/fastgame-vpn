@@ -1,0 +1,29 @@
+[workspace]
+resolver = "2"
+members = ["crates/fg-core", "crates/fg-service", "crates/fg-app", "app/src-tauri"]
+# `cargo test` at this level builds only the crates that compile on any OS.
+# The Tauri shell is built on Windows (see .github/workflows/windows.yml).
+default-members = ["crates/fg-core", "crates/fg-service", "crates/fg-app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+repository = "https://github.com/bashirrazmjoo-dotcom/fastgame-vpn"
+rust-version = "1.80"
+
+[workspace.dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync", "io-util", "process", "net", "fs", "signal"] }
+tokio-util = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+async-trait = "0.1"
+thiserror = "2"
+tracing = "0.1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

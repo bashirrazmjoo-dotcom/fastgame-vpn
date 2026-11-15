@@ -1,0 +1,22 @@
+[package]
+name = "fg-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "FastGame VPN app logic without any UI toolkit: device identity, account/servers cache, commands the UI calls"
+
+[dependencies]
+fg-core = { path = "../fg-core" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+async-trait = { workspace = true }
+sha2 = "0.10"
+hex = "0.4"
+uuid = { version = "1", features = ["v4"] }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

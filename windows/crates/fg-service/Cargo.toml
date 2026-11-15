@@ -1,0 +1,38 @@
+[package]
+name = "fg-service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "FastGame VPN network service: runs sing-box with a Wintun adapter and serves the app over a named pipe"
+
+[lib]
+name = "fg_service"
+path = "src/lib.rs"
+
+[[bin]]
+name = "fastgame-service"
+path = "src/main.rs"
+
+[dependencies]
+fg-core = { path = "../fg-core" }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+async-trait = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-service = "0.8"
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_System_Pipes",
+    "Win32_System_Threading",
+    "Win32_Storage_FileSystem",
+    "Win32_System_IO",
+] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

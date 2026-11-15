@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; font-src 'self'; connect-src ipc: http://ipc.localhost">
+  <title>FastGame</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <main class="app">
+    <header class="top">
+      <div class="menu" role="group">
+        <button class="round" id="btn-lang" data-i18n-title="change_language" title="" aria-label="language">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg>
+        </button>
+        <button class="round" id="btn-theme" data-i18n-title="change_theme" title="" aria-label="theme">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+      </div>
+      <h1 class="brand" dir="ltr">FastGame</h1>
+      <span class="spacer"></span>
+    </header>
+
+    <section class="card timer" aria-live="off">
+      <h2 data-i18n="time_card_title"></h2>
+      <div class="tiles" dir="ltr">
+        <div class="tile"><b id="t-d">0</b><span data-i18n="unit_days"></span></div>
+        <div class="tile"><b id="t-h">0</b><span data-i18n="unit_hours"></span></div>
+        <div class="tile"><b id="t-m">0</b><span data-i18n="unit_minutes"></span></div>
+        <div class="tile"><b id="t-s">0</b><span data-i18n="unit_seconds"></span></div>
+      </div>
+      <p class="note" id="timer-note"></p>
+    </section>
+
+    <section class="card messages" id="messages" hidden role="status" aria-live="polite"></section>
+
+    <section class="card connect">
+      <label class="field">
+        <span data-i18n="label_server"></span>
+        <select id="server"></select>
+      </label>
+      <button class="power" id="btn-connect" type="button">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg>
+      </button>
+      <div class="status" id="status"></div>
+      <div class="hint" id="hint"></div>
+    </section>
+
+    <section class="row">
+      <button class="btn primary" id="btn-vip" data-i18n="buy_vip"></button>
+      <button class="btn" id="btn-support" data-i18n="support"></button>
+    </section>
+
+    <section class="id" id="id-row" hidden>
+      <span data-i18n="label_your_id"></span>
+      <button class="code" id="btn-copy" dir="ltr" type="button"><span id="user-code"></span></button>
+    </section>
+
+    <footer class="foot">
+      <button class="link" id="btn-privacy" data-i18n="privacy_policy"></button>
+      <span>·</span>
+      <button class="link" id="btn-licenses" data-i18n="licenses"></button>
+    </footer>
+  </main>
+
+  <dialog id="licenses-dialog">
+    <h3 data-i18n="licenses"></h3>
+    <pre id="licenses-text" dir="ltr"></pre>
+    <button class="btn" id="btn-licenses-close" data-i18n="close"></button>
+  </dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+[package]
+name = "fastgame"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "FastGame VPN for Windows"
+
+[[bin]]
+name = "FastGame"
+path = "src/main.rs"
+
+[features]
+# Serve the bundled page instead of a dev server (what `tauri build` turns on).
+custom-protocol = ["tauri/custom-protocol"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+fg-core = { path = "../../crates/fg-core" }
+fg-app = { path = "../../crates/fg-app" }
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-single-instance = "2"
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_Foundation"] }
