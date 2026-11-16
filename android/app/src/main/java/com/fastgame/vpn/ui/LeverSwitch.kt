@@ -63,11 +63,11 @@ fun LeverSwitch(
 
     Box(
         Modifier
-            .size(width = 184.dp, height = 112.dp)
+            .size(width = 184.dp, height = 100.dp)
             .semantics { contentDescription = description }
             .clickable(enabled = enabled, role = Role.Switch, onClick = onClick),
     ) {
-        Canvas(Modifier.size(width = 184.dp, height = 112.dp)) {
+        Canvas(Modifier.size(width = 184.dp, height = 100.dp)) {
             val dp = 1.dp.toPx()
             val baseW = 118 * dp
             val baseH = 40 * dp
@@ -128,7 +128,7 @@ fun LeverSwitch(
             val slotBottom = slotTop + slotH
             val pivot = Offset(baseL + baseW * (0.22f + 0.56f * p), slotBottom)
             val rad = Math.toRadians(((p - 0.5f) * 2 * 18f).toDouble())
-            val len = 40 * dp
+            val len = 52 * dp
             val dx = sin(rad).toFloat()
             val dy = cos(rad).toFloat()
             val tip = Offset(pivot.x + dx * len, pivot.y - dy * len)
