@@ -145,13 +145,13 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         ) {
             ConnectButton(conn.phase, actions.onToggle)
         }
+        MessageArea(conn.notice, quotaOver, actions.onDismissNotice, actions.onCopyText)
+        if (conn.notice == null && !quotaOver) StatusBanner(conn.phase)
         Spacer(Modifier.height(12.dp))
 
         InfoRow(ui.selectedServer, ui.servers, conn.phase == Phase.IDLE, actions.onSelectServer, account, conn)
         val freeLeft = if (conn.phase != Phase.IDLE && conn.remainingSeconds != null) conn.remainingSeconds!! else account?.quota?.remainingSeconds ?: 1L
         val quotaOver = account != null && !account.isVip && freeLeft <= 0L
-        MessageArea(conn.notice, quotaOver, actions.onDismissNotice, actions.onCopyText)
-        if (conn.notice == null && !quotaOver) StatusBanner(conn.phase)
         Spacer(Modifier.height(12.dp))
         if (account != null) IdCard(account.userCode, actions)
         Spacer(Modifier.height(12.dp))
@@ -296,7 +296,7 @@ private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>,
     Column(modifier.modernCard(20.dp).padding(horizontal = 14.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             stringResource(R.string.server_list_title),
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
         )
