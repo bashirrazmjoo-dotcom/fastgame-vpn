@@ -131,7 +131,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         Spacer(Modifier.height(16.dp))
 
         Column(
-            Modifier.fillMaxWidth().modernCard(20.dp).padding(vertical = 18.dp, horizontal = 16.dp),
+            Modifier.fillMaxWidth().modernCard(20.dp).padding(vertical = 12.dp, horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             ConnectButton(conn.phase, actions.onToggle)
@@ -204,7 +204,7 @@ private fun ConnectButton(phase: Phase, onClick: () -> Unit) {
     val connected = phase == Phase.CONNECTED
     val busy = phase == Phase.STARTING || phase == Phase.CONNECTING || phase == Phase.DISCONNECTING
     val label = stringResource(if (connected) R.string.hint_tap_to_disconnect else R.string.hint_tap_to_connect)
-    PowerButton(connected, busy, phase != Phase.DISCONNECTING, label, onClick)
+    LeverSwitch(connected, busy, phase != Phase.DISCONNECTING, label, onClick)
 }
 
 /** The one place where messages appear: the out-of-time notice and every warning, in the same style. */
