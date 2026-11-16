@@ -1,5 +1,14 @@
 package com.fastgame.vpn.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.ui.draw.scale
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
@@ -131,12 +140,10 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         Spacer(Modifier.height(16.dp))
 
         Column(
-            Modifier.fillMaxWidth().modernCard(20.dp).padding(vertical = 12.dp, horizontal = 16.dp),
+            Modifier.fillMaxWidth().modernCard(20.dp).padding(vertical = 8.dp, horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             ConnectButton(conn.phase, actions.onToggle)
-            Spacer(Modifier.height(2.dp))
-            Text(statusText(conn.phase), style = MaterialTheme.typography.titleLarge)
         }
         Spacer(Modifier.height(12.dp))
 
@@ -144,6 +151,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         val freeLeft = if (conn.phase != Phase.IDLE && conn.remainingSeconds != null) conn.remainingSeconds!! else account?.quota?.remainingSeconds ?: 1L
         val quotaOver = account != null && !account.isVip && freeLeft <= 0L
         MessageArea(conn.notice, quotaOver, actions.onDismissNotice, actions.onCopyText)
+        if (conn.notice == null && !quotaOver) StatusBanner(conn.phase)
         Spacer(Modifier.height(12.dp))
         if (account != null) IdCard(account.userCode, actions)
         Spacer(Modifier.height(12.dp))
@@ -204,7 +212,35 @@ private fun ConnectButton(phase: Phase, onClick: () -> Unit) {
     val connected = phase == Phase.CONNECTED
     val busy = phase == Phase.STARTING || phase == Phase.CONNECTING || phase == Phase.DISCONNECTING
     val label = stringResource(if (connected) R.string.hint_tap_to_disconnect else R.string.hint_tap_to_connect)
-    LeverSwitch(connected, busy, phase != Phase.DISCONNECTING, label, onClick)
+    // Same button as before, drawn at about 70% so the card is shorter.
+    Box(Modifier.size(124.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.requiredSize(176.dp).scale(0.7f), contentAlignment = Alignment.Center) {
+            PowerButton(connected, busy, phase != Phase.DISCONNECTING, label, onClick)
+        }
+    }
+}
+
+/** Connection status as a message in the same place and style as warnings; "connected" fades away after a moment. */
+@Composable
+private fun StatusBanner(phase: Phase) {
+    var showConnected by remember { mutableStateOf(true) }
+    LaunchedEffect(phase) {
+        if (phase == Phase.CONNECTED) { showConnected = true; delay(3000); showConnected = false }
+    }
+    val visible = when (phase) {
+        Phase.IDLE -> false
+        Phase.CONNECTED -> showConnected
+        else -> true
+    }
+    AnimatedVisibility(visible, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
+        Column {
+            Spacer(Modifier.height(12.dp))
+            Column(
+                Modifier.fillMaxWidth().modernCard(16.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) { SpectrumText(statusText(phase), Modifier.fillMaxWidth()) }
+        }
+    }
 }
 
 /** The one place where messages appear: the out-of-time notice and every warning, in the same style. */
