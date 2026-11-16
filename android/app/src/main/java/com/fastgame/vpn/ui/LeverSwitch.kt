@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -41,8 +42,8 @@ fun LeverSwitch(
         else -> -40f
     }
     val angle by animateFloatAsState(target, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow), label = "lever")
-    val accent = Pal.Accent
-    val violet = Pal.AccentViolet
+    val accent = Accent
+    val violet = AccentViolet
     val ink = Pal.text
     val border = Pal.cardBorder
     val fill = Pal.discFill
