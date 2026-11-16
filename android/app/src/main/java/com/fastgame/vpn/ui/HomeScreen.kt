@@ -145,13 +145,13 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
         ) {
             ConnectButton(conn.phase, actions.onToggle)
         }
+        val freeLeft = if (conn.phase != Phase.IDLE && conn.remainingSeconds != null) conn.remainingSeconds!! else account?.quota?.remainingSeconds ?: 1L
+        val quotaOver = account != null && !account.isVip && freeLeft <= 0L
         MessageArea(conn.notice, quotaOver, actions.onDismissNotice, actions.onCopyText)
         if (conn.notice == null && !quotaOver) StatusBanner(conn.phase)
         Spacer(Modifier.height(12.dp))
 
         InfoRow(ui.selectedServer, ui.servers, conn.phase == Phase.IDLE, actions.onSelectServer, account, conn)
-        val freeLeft = if (conn.phase != Phase.IDLE && conn.remainingSeconds != null) conn.remainingSeconds!! else account?.quota?.remainingSeconds ?: 1L
-        val quotaOver = account != null && !account.isVip && freeLeft <= 0L
         Spacer(Modifier.height(12.dp))
         if (account != null) IdCard(account.userCode, actions)
         Spacer(Modifier.height(12.dp))
