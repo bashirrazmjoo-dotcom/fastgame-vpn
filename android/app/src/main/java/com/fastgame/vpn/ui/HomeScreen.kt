@@ -212,12 +212,7 @@ private fun ConnectButton(phase: Phase, onClick: () -> Unit) {
     val connected = phase == Phase.CONNECTED
     val busy = phase == Phase.STARTING || phase == Phase.CONNECTING || phase == Phase.DISCONNECTING
     val label = stringResource(if (connected) R.string.hint_tap_to_disconnect else R.string.hint_tap_to_connect)
-    // Same button as before, drawn at about 70% so the card is shorter.
-    Box(Modifier.size(124.dp), contentAlignment = Alignment.Center) {
-        Box(Modifier.requiredSize(176.dp).scale(0.7f), contentAlignment = Alignment.Center) {
-            PowerButton(connected, busy, phase != Phase.DISCONNECTING, label, onClick)
-        }
-    }
+    LeverSwitch(connected, busy, phase != Phase.DISCONNECTING, label, onClick)
 }
 
 /** Connection status as a message in the same place and style as warnings; "connected" fades away after a moment. */
