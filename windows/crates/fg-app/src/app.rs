@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use fg_core::api::CallError;
 use fg_core::backend::Backend;
-use fg_core::controller::{ConnectionController, ConnectionState};
+use fg_core::controller::{ConnectionController, ConnectionState, Phase};
 use fg_core::model::{Account, AppConfig, ServerInfo};
 use serde::Serialize;
 use tokio::sync::watch;
@@ -204,6 +204,27 @@ impl AppCore {
         self.publish();
     }
 
+    /// Chooses a server. While a connection is running it is moved to the new server:
+    /// the old session is closed first (one session per device), then a new one starts.
+    pub async fn switch_server(&self, id: u32) {
+        let before = self.snapshot();
+        self.select_server(id);
+        let running = before.connection.phase != Phase::Idle;
+        if !running || self.snapshot().selected_server_id == before.selected_server_id {
+            return;
+        }
+        self.disconnect();
+        let mut rx = self.subscribe();
+        let _ = tokio::time::timeout(std::time::Duration::from_secs(20), rx.wait_for(|s| s.connection.phase == Phase::Idle)).await;
+        // The state turns Idle just before the session task ends; give it a moment.
+        for _ in 0..60 {
+            if self.connect() {
+                return;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        }
+    }
+
     /// Returns false when nothing could be started (no server chosen, blocked, already running).
     pub fn connect(&self) -> bool {
         let server = {
@@ -333,6 +354,34 @@ mod tests {
         let backend: Arc<dyn Backend> = Arc::new(FakeBackend { servers, offline, latest });
         let controller = ConnectionController::new(backend.clone(), Arc::new(NoEngine));
         AppCore::new(backend, controller, Arc::new(FileStore::open(path)), 1, update_check)
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn switching_server_while_running_reconnects_to_the_new_one() {
+        let c = core(vec![server(7, "xray"), server(9, "xray")], false, 0, true, "switch");
+        c.refresh().await;
+        assert!(c.connect());
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await; // the snapshot follows the controller asynchronously
+        assert_eq!(c.snapshot().connection.server_id, Some(7));
+        c.switch_server(9).await;
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        let s = c.snapshot();
+        assert_eq!(s.selected_server_id, Some(9));
+        assert_eq!(s.connection.server_id, Some(9));
+        assert_ne!(s.connection.phase, Phase::Idle, "a new connection is running");
+        // Choosing the same server again changes nothing.
+        c.switch_server(9).await;
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        assert_eq!(c.snapshot().connection.server_id, Some(9));
+    }
+
+    #[tokio::test]
+    async fn switching_server_while_idle_only_selects() {
+        let c = core(vec![server(7, "xray"), server(9, "xray")], false, 0, true, "switch-idle");
+        c.refresh().await;
+        c.switch_server(9).await;
+        assert_eq!(c.snapshot().selected_server_id, Some(9));
+        assert_eq!(c.snapshot().connection.phase, Phase::Idle);
     }
 
     #[tokio::test]

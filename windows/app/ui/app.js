@@ -114,7 +114,8 @@
   }
 
   function renderServers() {
-    const busy = snap.connection.phase !== "idle";
+    // The server can be changed while connected: the connection then moves to the new server.
+    const busy = snap.connection.phase === "disconnecting";
     const label = (sv) => `${lang === "fa" ? sv.country_name_fa : sv.country_name_en} — ${sv.name}`;
     const cur = snap.servers.find((x) => x.id === snap.selected_server_id);
     $("srv-title").textContent = cur ? label(cur) : t("choose_server");
@@ -128,7 +129,7 @@
         const text = label(sv) + (sv.supported ? "" : ` (${t("coming_soon")})`);
         for (let i = 0; i < 2; i++) { const x = document.createElement("span"); x.textContent = text; r.append(x); }
         b.append(r);
-        b.onclick = () => { setSrv(false); invoke("select_server", { id: sv.id }); };
+        b.onclick = () => { setSrv(false); if (sv.id !== snap.selected_server_id) invoke("select_server", { id: sv.id }); };
         return b;
       })
     );
@@ -136,6 +137,29 @@
     $("srv").style.setProperty("--h", Math.min(48 + n * 44 + 12, 320) + "px");
     $("srv-bar").disabled = busy || snap.servers.length === 0;
     if (busy) setSrv(false);
+  }
+
+  // Status text changes with a liquid morph (port of the supplied MorphingText): the old words blur
+  // out while the new ones sharpen in, under an SVG threshold filter that makes the blur look liquid.
+  const MORPH_MS = 900;
+  let shownStatus = null, morphRaf = 0;
+  function setStatus(text) {
+    const box = $("status"), a = box.querySelector(".st-a"), b = box.querySelector(".st-b");
+    $("status-text").textContent = text;
+    cancelAnimationFrame(morphRaf);
+    const rest = (v) => { box.classList.remove("morphing"); a.textContent = v; a.style.cssText = ""; b.textContent = ""; b.style.cssText = ""; shownStatus = v; };
+    if (shownStatus === null || shownStatus === text || matchMedia("(prefers-reduced-motion: reduce)").matches) { rest(text); return; }
+    a.textContent = shownStatus; b.textContent = text; box.classList.add("morphing");
+    const start = performance.now();
+    const step = (now) => {
+      const f = Math.min((now - start) / MORPH_MS, 1);
+      if (f >= 1) { rest(text); return; }
+      b.style.filter = `blur(${Math.min(8 / f - 8, 100)}px)`; b.style.opacity = `${Math.pow(f, 0.4) * 100}%`;
+      const g = 1 - f;
+      a.style.filter = `blur(${Math.min(8 / g - 8, 100)}px)`; a.style.opacity = `${Math.pow(g, 0.4) * 100}%`;
+      morphRaf = requestAnimationFrame(step);
+    };
+    morphRaf = requestAnimationFrame(step);
   }
 
   function setSrv(open) {
@@ -154,9 +178,9 @@
     const quotaOver = !!a && !a.is_vip && a.remaining_seconds <= 0;
     const canStart = !!snap.selected_server_id && !!a && !a.is_blocked && !quotaOver;
     btn.disabled = phase === "disconnecting" || (phase === "idle" && !canStart);
-    $("status").textContent = t("status_" + (phase === "idle" ? "disconnected" : phase));
-    $("hint").textContent = phase === "idle" ? (canStart ? t("hint_tap_to_connect") : "") : phase === "disconnecting" ? "" : t("hint_tap_to_disconnect");
-    btn.setAttribute("aria-label", $("status").textContent);
+    const statusText = t("status_" + (phase === "idle" ? "disconnected" : phase));
+    setStatus(statusText);
+    btn.setAttribute("aria-label", statusText);
   }
 
   function render() {

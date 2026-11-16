@@ -118,7 +118,7 @@ async fn dismiss_notice(core: State<'_, Core>) -> Result<(), ()> {
 }
 #[tauri::command]
 async fn select_server(core: State<'_, Core>, id: u32) -> Result<(), ()> {
-    core.0.select_server(id);
+    core.0.switch_server(id).await;
     Ok(())
 }
 #[tauri::command]

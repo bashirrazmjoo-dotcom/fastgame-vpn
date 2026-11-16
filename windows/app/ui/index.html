@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <svg class="sr-only" width="0" height="0" aria-hidden="true" focusable="false"><defs><filter id="threshold"><feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"/></filter></defs></svg>
   <div class="bg" aria-hidden="true"></div>
   <main class="app">
     <header class="top">
@@ -42,8 +43,7 @@
       <button class="power" id="btn-connect" type="button">
         <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg>
       </button>
-      <div class="status" id="status"></div>
-      <div class="hint" id="hint"></div>
+      <div class="status" id="status"><span class="st-a" aria-hidden="true"></span><span class="st-b" aria-hidden="true"></span><span class="sr-only" id="status-text" role="status" aria-live="polite"></span></div>
     </section>
 
     <section class="card server">

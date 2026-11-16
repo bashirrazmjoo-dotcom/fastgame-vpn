@@ -94,14 +94,27 @@ button:disabled { cursor: not-allowed; }
 .power { width: 116px; height: 116px; border-radius: 50%; border: 0; color: var(--on-accent); display: grid; place-items: center;
   background: radial-gradient(circle at 30% 25%, #8b5cf6, var(--accent) 55%, #4c1d95); box-shadow: 0 12px 30px -10px rgba(124,58,237,.7), inset 0 1px 0 rgba(255,255,255,.25);
   transition: transform var(--t-fast), box-shadow var(--t-med), filter var(--t-med); }
+@property --shine { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+/* Connected: a light runs around the button and a sheen sweeps across it (shiny-button effect). */
+.power { position: relative; }
+.power[data-phase="connected"]::before { content: ""; position: absolute; inset: -7px; border-radius: 50%; padding: 3px; pointer-events: none;
+  background: conic-gradient(from var(--shine), rgba(94,234,212,.12) 0 55%, var(--teal-text) 80%, #fff 92%, rgba(94,234,212,.12) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: shine-spin 2.8s linear infinite; }
+.power[data-phase="connected"]::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.38) 50%, transparent 62%); background-size: 260% 100%; background-position: 130% 0; animation: sheen 3s ease-in-out infinite; }
+@keyframes shine-spin { to { --shine: 360deg; } }
+@keyframes sheen { 0% { background-position: 130% 0; } 55%, 100% { background-position: -30% 0; } }
 .power:hover:not(:disabled) { transform: scale(1.03); }
 .power:active:not(:disabled) { transform: scale(.97); }
 .power:disabled { filter: grayscale(.6) brightness(.8); }
 .power[data-phase="connected"] { background: radial-gradient(circle at 30% 25%, #14b8a6, var(--teal) 60%, #134e4a); box-shadow: 0 12px 30px -10px rgba(20,184,166,.7), inset 0 1px 0 rgba(255,255,255,.25); }
 .power[data-busy="true"] { animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 50% { box-shadow: 0 12px 40px -6px rgba(124,58,237,.85), inset 0 1px 0 rgba(255,255,255,.25); } }
-.status { font-size: var(--fs-lg); font-weight: 700; }
-.hint { font-size: var(--fs-sm); color: var(--muted); margin-top: calc(var(--s2) * -1); min-height: 1.4em; }
+.status { position: relative; width: 100%; height: 32px; text-align: center; font-size: var(--fs-lg); font-weight: 700; line-height: 32px; }
+.status .st-a, .status .st-b { position: absolute; inset-inline: 0; top: 0; }
+.status.morphing { filter: url(#threshold) blur(.6px); }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* ---- buttons ---- */
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
