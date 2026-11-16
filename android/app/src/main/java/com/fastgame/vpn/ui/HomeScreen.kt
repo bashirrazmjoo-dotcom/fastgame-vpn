@@ -117,22 +117,27 @@ private fun ErrorView(error: LoadError, actions: HomeActions) {
 private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions) {
     val account = ui.account
     val fa = Locale.getDefault().language == "fa"
+    val scroll = rememberScrollState()
     Box(Modifier.fillMaxSize()) {
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        Modifier.fillMaxSize().verticalScroll(scroll).padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(28.dp))
-        Row(Modifier.fillMaxWidth().height(48.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
             LiquidTitle(stringResource(R.string.app_name))
         }
         Spacer(Modifier.height(16.dp))
 
-        Spacer(Modifier.height(8.dp))
-        ConnectButton(conn.phase, actions.onToggle)
-        Spacer(Modifier.height(2.dp))
-        Text(statusText(conn.phase), style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(10.dp))
+        Column(
+            Modifier.fillMaxWidth().modernCard(20.dp).padding(vertical = 18.dp, horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ConnectButton(conn.phase, actions.onToggle)
+            Spacer(Modifier.height(2.dp))
+            Text(statusText(conn.phase), style = MaterialTheme.typography.titleLarge)
+        }
+        Spacer(Modifier.height(12.dp))
 
         InfoRow(ui.selectedServer, ui.servers, conn.phase == Phase.IDLE, actions.onSelectServer, account, conn)
         val freeLeft = if (conn.phase != Phase.IDLE && conn.remainingSeconds != null) conn.remainingSeconds!! else account?.quota?.remainingSeconds ?: 1L
@@ -177,7 +182,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
             FluidItem("", stringResource(R.string.change_theme), actions.onToggleTheme) { ThemeGlyph(sun = !Pal.light, color = Pal.text) },
             FluidItem("", stringResource(R.string.share_app), actions.onShare) { ShareGlyph(Pal.text) },
         ),
-        modifier = Modifier.align(Alignment.TopEnd).padding(top = 48.dp, end = 20.dp),
+        modifier = Modifier.align(Alignment.TopEnd).offset { androidx.compose.ui.unit.IntOffset(0, -scroll.value) }.padding(top = 48.dp, end = 20.dp),
     )
     }
 }
@@ -250,10 +255,20 @@ private fun InfoRow(server: VpnServerInfo?, servers: List<VpnServerInfo>, enable
 
 @Composable
 private fun ServerSquare(selected: VpnServerInfo?, servers: List<VpnServerInfo>, enabled: Boolean, onSelect: (Int) -> Unit, modifier: Modifier) {
-    LiquidServerMenu(
-        selected = selected, servers = servers, canPick = servers.size > 1,
-        emptyLabel = stringResource(R.string.choose_server), onSelect = onSelect, modifier = modifier,
-    )
+    // Card with its own title; the picker sits in the middle of it.
+    Column(modifier.modernCard(20.dp).padding(horizontal = 14.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            stringResource(R.string.server_list_title),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(10.dp))
+        LiquidServerMenu(
+            selected = selected, servers = servers, canPick = servers.size > 1,
+            emptyLabel = stringResource(R.string.choose_server), onSelect = onSelect, modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }
 
 /** Regional-indicator pair for a two-letter country code (renders as a flag); empty when unknown. */

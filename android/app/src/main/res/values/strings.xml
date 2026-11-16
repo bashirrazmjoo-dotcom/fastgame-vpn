@@ -74,4 +74,5 @@
     <string name="share_short">Share</string>
     <string name="share_app">Share the app</string>
     <string name="share_text">FastGame VPN: fast and built for gaming.\n%1$s</string>
+    <string name="server_list_title">Server list</string>
 </resources>
