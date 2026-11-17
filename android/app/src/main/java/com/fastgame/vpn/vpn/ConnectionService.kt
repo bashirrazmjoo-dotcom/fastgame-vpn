@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 class ConnectionService : Service() {
 
     private var observer: Job? = null
+    private var wakeLock: android.os.PowerManager.WakeLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -37,6 +38,15 @@ class ConnectionService : Service() {
         createChannel()
         val type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED else 0
         ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(container.connection.state.value), type)
+
+        // Keep the CPU awake while a session runs so the heartbeat and auto-reconnect work with the screen off.
+        if (wakeLock == null) {
+            wakeLock = runCatching {
+                getSystemService(android.os.PowerManager::class.java)
+                    .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "fastgame:session")
+                    .apply { setReferenceCounted(false); acquire(8 * 60 * 60 * 1000L) }
+            }.getOrNull()
+        }
 
         if (observer == null) {
             observer = container.appScope.launch {
@@ -54,6 +64,8 @@ class ConnectionService : Service() {
     }
 
     override fun onDestroy() {
+        runCatching { wakeLock?.takeIf { it.isHeld }?.release() }
+        wakeLock = null
         observer?.cancel()
         observer = null
         super.onDestroy()

@@ -68,6 +68,12 @@ class ConnectionController(
     val state: StateFlow<ConnectionState> = _state.asStateFlow()
 
     private var job: Job? = null
+    private val netChanges = java.util.concurrent.atomic.AtomicInteger(0)
+
+    /** The phone switched network (WiFi <-> mobile data, ...): the running tunnel is probed and replaced if dead. */
+    fun onNetworkChanged() {
+        netChanges.incrementAndGet()
+    }
 
     init {
         scope.launch {
@@ -206,6 +212,9 @@ class ConnectionController(
         val interval = heartbeatSeconds.coerceAtLeast(MIN_HEARTBEAT_SECONDS)
         var secondsSinceBeat = 0
         var lastSuccessAt = nowMillis()
+        var seenNetChanges = netChanges.get()
+        var probing = false
+        var reconnectingFor = 0
         while (true) {
             delay(1_000)
             secondsSinceBeat++
@@ -216,6 +225,22 @@ class ConnectionController(
                 else -> Unit
             }
 
+            // The engine's own reconnect after a network change is given a short time; then a fresh session replaces it.
+            if (engine.state.value == EngineState.Connecting) {
+                if (++reconnectingFor > STUCK_RECONNECT_SECONDS) return Notice.ConnectionLost
+            } else {
+                reconnectingFor = 0
+            }
+
+            // After a network switch, check the tunnel right away with a heartbeat instead of waiting for the next one.
+            val changes = netChanges.get()
+            if (changes != seenNetChanges) {
+                seenNetChanges = changes
+                delay(NETWORK_SETTLE_MS)
+                probing = true
+                secondsSinceBeat = interval
+            }
+
             val left = tickRemaining()
             val exhaustedLocally = left != null && left <= 0
             if (secondsSinceBeat < interval && !exhaustedLocally) continue
@@ -224,10 +249,13 @@ class ConnectionController(
             try {
                 val result = backend.heartbeat(sessionId)
                 lastSuccessAt = nowMillis()
+                probing = false
                 evaluate(result)?.let { return it }
             } catch (e: ApiException) {
                 return noticeFor(e)
             } catch (e: NetworkException) {
+                // A dead tunnel after a network switch: start over now rather than after the grace time.
+                if (probing && engine.state.value == EngineState.Connected) return Notice.ConnectionLost
                 if (nowMillis() - lastSuccessAt > NETWORK_GRACE_MS) return Notice.NetworkLost
             }
         }
@@ -270,7 +298,9 @@ class ConnectionController(
 
     private companion object {
         const val CONNECT_TIMEOUT_MS = 90_000L
-        const val NETWORK_GRACE_MS = 180_000L
+        const val NETWORK_GRACE_MS = 75_000L
+        const val NETWORK_SETTLE_MS = 3_000L
+        const val STUCK_RECONNECT_SECONDS = 25
         const val MIN_HEARTBEAT_SECONDS = 5
         const val MAX_FAILED_ATTEMPTS = 6
         const val MAX_ENGINE_FAILURES = 2

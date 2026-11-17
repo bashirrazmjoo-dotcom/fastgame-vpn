@@ -42,4 +42,27 @@ class AppContainer(app: Application) {
 
     val engine: VpnEngine = createVpnEngine(app)
     val connection = ConnectionController(backend, engine, appScope)
+
+    init {
+        // Tell the controller when the underlying network changes (the VPN itself is excluded).
+        runCatching {
+            val cm = app.getSystemService(android.net.ConnectivityManager::class.java)
+            val request = android.net.NetworkRequest.Builder()
+                .addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+                .build()
+            var last: android.net.Network? = null
+            cm.registerNetworkCallback(request, object : android.net.ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: android.net.Network) {
+                    if (last != null && last != network) connection.onNetworkChanged()
+                    last = network
+                }
+
+                override fun onLost(network: android.net.Network) {
+                    if (last == network) last = null
+                    connection.onNetworkChanged()
+                }
+            })
+        }
+    }
 }
