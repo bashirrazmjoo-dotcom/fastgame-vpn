@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         // First launch: Persian unless a language was already chosen.
         if (AppCompatDelegate.getApplicationLocales().isEmpty) AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("fa"))
         val uiPrefs = getSharedPreferences("ui", MODE_PRIVATE)
-        com.fastgame.vpn.ui.Pal.light = uiPrefs.getBoolean("light", false)
+        com.fastgame.vpn.ui.Pal.light = uiPrefs.getBoolean("light", true)
         setContent {
             FastGameTheme {
                 val vm: MainViewModel = viewModel(factory = object : ViewModelProvider.Factory {

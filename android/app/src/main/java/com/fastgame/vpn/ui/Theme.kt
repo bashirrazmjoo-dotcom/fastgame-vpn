@@ -131,6 +131,14 @@ fun FastGameTheme(content: @Composable () -> Unit) {
 @Composable
 fun Web3Background(content: @Composable BoxScope.() -> Unit) {
     // Surface provides the readable default text color (a bare Box would leave text black).
+    // Light theme: a soft pastel gradient whose hues drift slowly (like an oklch hue animation).
+    val drift by androidx.compose.animation.core.rememberInfiniteTransition(label = "bg").animateFloat(
+        0f, 360f,
+        androidx.compose.animation.core.infiniteRepeatable(
+            androidx.compose.animation.core.tween(14000, easing = androidx.compose.animation.core.LinearEasing),
+        ),
+        label = "hue",
+    )
     androidx.compose.material3.Surface(
         color = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onBackground,
@@ -140,6 +148,14 @@ fun Web3Background(content: @Composable BoxScope.() -> Unit) {
             .fillMaxSize()
             .background(Brush.verticalGradient(listOf(Pal.bgTop, Pal.bg, Pal.bgBottom)))
             .drawBehind {
+                if (Pal.light) {
+                    val h1 = 30f + drift
+                    val h2 = 180f + drift
+                    fun c(h: Float) = Color.hsl(h % 360f, 0.85f, 0.9f).copy(alpha = 0.6f)
+                    drawRect(Brush.horizontalGradient(listOf(c(h1), c(h2))))
+                    drawRect(Brush.verticalGradient(listOf(c(h1), c(h2))))
+                    return@drawBehind
+                }
                 drawCircle(
                     Brush.radialGradient(
                         listOf(AccentViolet.copy(alpha = Pal.orbA), Color.Transparent),
