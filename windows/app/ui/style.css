@@ -90,27 +90,34 @@ button:disabled { cursor: not-allowed; }
 .messages button { margin-top: var(--s2); }
 
 /* ---- connect ---- */
-.connect { display: flex; flex-direction: column; align-items: center; gap: var(--s3); padding: var(--s5) var(--s4); }
-.power { width: 116px; height: 116px; border-radius: 50%; border: 0; color: var(--on-accent); display: grid; place-items: center;
-  background: radial-gradient(circle at 30% 25%, #8b5cf6, var(--accent) 55%, #4c1d95); box-shadow: 0 12px 30px -10px rgba(124,58,237,.7), inset 0 1px 0 rgba(255,255,255,.25);
-  transition: transform var(--t-fast), box-shadow var(--t-med), filter var(--t-med); }
-@property --shine { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-/* Connected: a light runs around the button and a sheen sweeps across it (shiny-button effect). */
-.power { position: relative; }
-.power[data-phase="connected"]::before { content: ""; position: absolute; inset: -7px; border-radius: 50%; padding: 3px; pointer-events: none;
-  background: conic-gradient(from var(--shine), rgba(94,234,212,.12) 0 55%, var(--teal-text) 80%, #fff 92%, rgba(94,234,212,.12) 100%);
+.connect { display: flex; flex-direction: column; align-items: center; padding: var(--s2) var(--s4); }
+
+/* ---- Lever switch (same drawing and proportions as LeverSwitch.kt on Android) ---- */
+@property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.lv { --lv-base-top: #f1f1f1; --lv-base-bot: #dadada; position: relative; width: 184px; height: 100px; padding: 0; border: 0; border-radius: 24px; background: none; flex: none; transition: transform var(--t-fast), opacity var(--t-med); }
+:root:not([data-theme="light"]) .lv { --lv-base-top: #dcdcde; --lv-base-bot: #bdbdc0; } /* a touch darker so the pale base is not harsh on the dark theme */
+.lv:active:not(:disabled) { transform: scale(.98); }
+.lv:disabled[data-phase="idle"] { opacity: .5; }
+.lv-top { stop-color: var(--lv-base-top); }
+.lv-bot { stop-color: var(--lv-base-bot); }
+.lv svg, .lv .lv-ring { position: absolute; inset: 0; pointer-events: none; }
+.lv svg { width: 184px; height: 100px; overflow: visible; }
+.lv-bloom { opacity: 0; transition: opacity .6s linear; }
+.lv .lv-ring { inset: auto; left: 30px; top: 45px; width: 124px; height: 46px; border-radius: 23px; padding: 2.5px; opacity: 0; transition: opacity .6s linear;
+  background: conic-gradient(from calc(var(--spin) + 90deg) at 50% 50%, hsl(0 100% 63%) 0%, hsl(90 100% 63%) 20%, hsl(210 100% 63%) 40%, hsl(195 100% 63%) 60%, hsl(270 100% 63%) 80%, hsl(0 100% 63%) 100%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-  animation: shine-spin 2.8s linear infinite; }
-.power[data-phase="connected"]::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
-  background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.38) 50%, transparent 62%); background-size: 260% 100%; background-position: 130% 0; animation: sheen 3s ease-in-out infinite; }
-@keyframes shine-spin { to { --shine: 360deg; } }
-@keyframes sheen { 0% { background-position: 130% 0; } 55%, 100% { background-position: -30% 0; } }
-.power:hover:not(:disabled) { transform: scale(1.03); }
-.power:active:not(:disabled) { transform: scale(.97); }
-.power:disabled { filter: grayscale(.6) brightness(.8); }
-.power[data-phase="connected"] { background: radial-gradient(circle at 30% 25%, #14b8a6, var(--teal) 60%, #134e4a); box-shadow: 0 12px 30px -10px rgba(20,184,166,.7), inset 0 1px 0 rgba(255,255,255,.25); }
-.power[data-busy="true"] { animation: pulse 1.6s ease-in-out infinite; }
-@keyframes pulse { 50% { box-shadow: 0 12px 40px -6px rgba(124,58,237,.85), inset 0 1px 0 rgba(255,255,255,.25); } }
+  animation: lv-spin 4.5s linear infinite; animation-play-state: paused; }
+.lv.on .lv-bloom, .lv.on .lv-ring { opacity: 1; }
+.lv.on .lv-ring { animation-play-state: running; }
+@keyframes lv-spin { to { --spin: 360deg; } }
+.lv-slot-on { opacity: 0; transition: opacity .25s; }
+.lv.on .lv-slot-on { opacity: 1; }
+
+/* ---- connection status banner (same place and style as the messages, like Android's StatusBanner) ---- */
+.banner { display: grid; grid-template-rows: 0fr; margin-block: calc(var(--s3) * -1) 0; opacity: 0; transition: grid-template-rows .3s var(--ease), opacity .3s, margin .3s var(--ease); }
+.banner.show { grid-template-rows: 1fr; margin-block: 0; opacity: 1; }
+.banner > .card { min-height: 0; overflow: hidden; padding-block: 0; border-width: 0; transition: padding .3s var(--ease), border-width .3s; }
+.banner.show > .card { padding-block: var(--s2); border-width: 1px; }
 .status { position: relative; width: 100%; height: 32px; text-align: center; font-size: var(--fs-lg); font-weight: 700; line-height: 32px; }
 .status .st-a, .status .st-b { position: absolute; inset-inline: 0; top: 0; }
 .status.morphing { filter: url(#threshold) blur(.6px); }

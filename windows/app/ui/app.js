@@ -143,12 +143,11 @@
   // out while the new ones sharpen in, under an SVG threshold filter that makes the blur look liquid.
   const MORPH_MS = 900;
   let shownStatus = null, morphRaf = 0;
-  function setStatus(text) {
+  function setStatus(text, immediate = false) {
     const box = $("status"), a = box.querySelector(".st-a"), b = box.querySelector(".st-b");
-    $("status-text").textContent = text;
     cancelAnimationFrame(morphRaf);
     const rest = (v) => { box.classList.remove("morphing"); a.textContent = v; a.style.cssText = ""; b.textContent = ""; b.style.cssText = ""; shownStatus = v; };
-    if (shownStatus === null || shownStatus === text || matchMedia("(prefers-reduced-motion: reduce)").matches) { rest(text); return; }
+    if (immediate || shownStatus === null || shownStatus === text || matchMedia("(prefers-reduced-motion: reduce)").matches) { rest(text); return; }
     a.textContent = shownStatus; b.textContent = text; box.classList.add("morphing");
     const start = performance.now();
     const step = (now) => {
@@ -168,20 +167,69 @@
     document.querySelectorAll("#srv-items .lm-item").forEach((b) => (b.tabIndex = open ? 0 : -1));
   }
 
+  // ---- lever switch: spring-driven, mirrors LeverSwitch.kt (118x40 base, 52 long lever, r17 ball) ----
+  const lever = { p: 0, v: 0, target: 0, raf: 0 };
+  function drawLever(p) {
+    const px = 33 + 118 * (0.22 + 0.56 * p), py = 78;
+    const deg = (p - 0.5) * 2 * 18, rad = (deg * Math.PI) / 180;
+    const tx = px + Math.sin(rad) * 52, ty = py - Math.cos(rad) * 52;
+    $("lv-lever").setAttribute("transform", `translate(${px} ${py}) rotate(${deg})`);
+    $("lv-lever-shadow").setAttribute("transform", `translate(${px + 3} ${py + 1.5}) rotate(${deg})`);
+    $("lv-ball").setAttribute("transform", `translate(${tx} ${ty})`);
+    $("lv-ball-shadow").setAttribute("transform", `translate(${tx + 5} ${py + 3})`);
+  }
+  // Compose spring(DampingRatioLowBouncy = 0.75, StiffnessLow = 200)
+  function moveLever(target) {
+    lever.target = target;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { lever.p = target; lever.v = 0; drawLever(target); return; }
+    if (lever.raf) return;
+    const k = 200, c = 2 * 0.75 * Math.sqrt(k);
+    let last = performance.now();
+    const step = (now) => {
+      let dt = Math.min((now - last) / 1000, 0.032); last = now;
+      for (let t = 0; t < dt; t += 0.004) { const h = Math.min(0.004, dt - t); lever.v += (-k * (lever.p - lever.target) - c * lever.v) * h; lever.p += lever.v * h; }
+      drawLever(lever.p);
+      if (Math.abs(lever.v) < 0.002 && Math.abs(lever.p - lever.target) < 0.0005) { lever.p = lever.target; drawLever(lever.p); lever.raf = 0; return; }
+      lever.raf = requestAnimationFrame(step);
+    };
+    lever.raf = requestAnimationFrame(step);
+  }
+
+  // ---- status banner: busy states stay, "connected" fades after 3 s, idle is hidden (as Android's StatusBanner) ----
+  let bannerTimer = 0, bannerPhase = null;
+  function renderBanner(phase, text) {
+    const banner = $("banner");
+    if (phase !== bannerPhase) {
+      clearTimeout(bannerTimer);
+      bannerPhase = phase;
+      if (phase === "connected") { banner.classList.add("show"); bannerTimer = setTimeout(() => banner.classList.remove("show"), 3000); }
+      else banner.classList.toggle("show", phase !== "idle");
+    }
+    $("status-text").textContent = phase === "idle" ? "" : text;
+    if (phase === "idle") { setStatus(text, true); return; }
+    setStatus(text, !banner.classList.contains("show"));
+  }
+
   function renderConnect() {
     const c = snap.connection;
     const a = snap.account;
     const btn = $("btn-connect");
     const phase = c.phase;
+    const busy = phase === "starting" || phase === "connecting" || phase === "disconnecting";
+    const on = phase === "connected";
     btn.dataset.phase = phase;
-    btn.dataset.busy = String(phase === "starting" || phase === "connecting" || phase === "disconnecting");
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-checked", String(on));
+    moveLever(busy ? 0.5 : on ? 1 : 0);
     const quotaOver = !!a && !a.is_vip && a.remaining_seconds <= 0;
     const canStart = !!snap.selected_server_id && !!a && !a.is_blocked && !quotaOver;
     btn.disabled = phase === "disconnecting" || (phase === "idle" && !canStart);
-    const statusText = t("status_" + (phase === "idle" ? "disconnected" : phase));
-    setStatus(statusText);
-    btn.setAttribute("aria-label", statusText);
+    btn.setAttribute("aria-label", t(on || busy ? "hint_tap_to_disconnect" : "hint_tap_to_connect"));
+    // Android shows the same words for "starting" and "connecting".
+    renderBanner(phase, t("status_" + (phase === "idle" ? "disconnected" : phase === "starting" ? "connecting" : phase)));
   }
+
+  drawLever(0);
 
   function render() {
     if (!snap) return;
