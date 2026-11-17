@@ -120,7 +120,6 @@ button:disabled { cursor: not-allowed; }
 .banner.show > .card { padding-block: var(--s2); border-width: 1px; }
 .status { position: relative; width: 100%; height: 32px; text-align: center; font-size: var(--fs-lg); font-weight: 700; line-height: 32px; }
 .status .st-a, .status .st-b { position: absolute; inset-inline: 0; top: 0; }
-.status.morphing { filter: url(#threshold) blur(.6px); }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* ---- buttons ---- */

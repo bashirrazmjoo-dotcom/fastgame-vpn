@@ -139,26 +139,11 @@
     if (busy) setSrv(false);
   }
 
-  // Status text changes with a liquid morph (port of the supplied MorphingText): the old words blur
-  // out while the new ones sharpen in, under an SVG threshold filter that makes the blur look liquid.
-  const MORPH_MS = 900;
-  let shownStatus = null, morphRaf = 0;
-  function setStatus(text, immediate = false) {
-    const box = $("status"), a = box.querySelector(".st-a"), b = box.querySelector(".st-b");
-    cancelAnimationFrame(morphRaf);
-    const rest = (v) => { box.classList.remove("morphing"); a.textContent = v; a.style.cssText = ""; b.textContent = ""; b.style.cssText = ""; shownStatus = v; };
-    if (immediate || shownStatus === null || shownStatus === text || matchMedia("(prefers-reduced-motion: reduce)").matches) { rest(text); return; }
-    a.textContent = shownStatus; b.textContent = text; box.classList.add("morphing");
-    const start = performance.now();
-    const step = (now) => {
-      const f = Math.min((now - start) / MORPH_MS, 1);
-      if (f >= 1) { rest(text); return; }
-      b.style.filter = `blur(${Math.min(8 / f - 8, 100)}px)`; b.style.opacity = `${Math.pow(f, 0.4) * 100}%`;
-      const g = 1 - f;
-      a.style.filter = `blur(${Math.min(8 / g - 8, 100)}px)`; a.style.opacity = `${Math.pow(g, 0.4) * 100}%`;
-      morphRaf = requestAnimationFrame(step);
-    };
-    morphRaf = requestAnimationFrame(step);
+  // The status words change without any motion.
+  function setStatus(text) {
+    const box = $("status");
+    box.querySelector(".st-a").textContent = text;
+    box.querySelector(".st-b").textContent = "";
   }
 
   function setSrv(open) {
@@ -206,8 +191,7 @@
       else banner.classList.toggle("show", phase !== "idle");
     }
     $("status-text").textContent = phase === "idle" ? "" : text;
-    if (phase === "idle") { setStatus(text, true); return; }
-    setStatus(text, !banner.classList.contains("show"));
+    setStatus(text);
   }
 
   function renderConnect() {
