@@ -7,6 +7,7 @@ import libv2ray.CoreController
 internal object XrayRuntime {
     val state = MutableStateFlow<EngineState>(EngineState.Disconnected)
     @Volatile var pendingConfig: String? = null
+    @Volatile var pendingApps: Set<String>? = null
     @Volatile var controller: CoreController? = null
     /** Last step reached by the service, included in error messages so a failure can be located. */
     @Volatile var stage: String = "-"

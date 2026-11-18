@@ -84,6 +84,8 @@ class HomeActions(
     val onDismissNotice: () -> Unit,
     val onAcceptDisclosure: () -> Unit,
     val onDeclineDisclosure: () -> Unit,
+    val loadAppFilter: () -> Pair<Boolean, Set<String>> = { false to emptySet() },
+    val onSaveAppFilter: (Boolean, Set<String>) -> Unit = { _, _ -> },
 )
 
 @Composable
@@ -128,6 +130,11 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
     val account = ui.account
     val fa = Locale.getDefault().language == "fa"
     val scroll = rememberScrollState()
+    var showApps by remember { mutableStateOf(false) }
+    if (showApps) {
+        val (on, apps) = remember { actions.loadAppFilter() }
+        AppFilterDialog(on, apps, onSave = actions.onSaveAppFilter, onDismiss = { showApps = false })
+    }
     Box(Modifier.fillMaxSize()) {
     Column(
         Modifier.fillMaxSize().verticalScroll(scroll).padding(20.dp),
@@ -190,6 +197,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
             FluidItem(if (fa) "EN" else "فا", stringResource(R.string.change_language), actions.onToggleLanguage),
             FluidItem("", stringResource(R.string.change_theme), actions.onToggleTheme) { ThemeGlyph(sun = !Pal.light, color = Pal.text) },
             FluidItem("", stringResource(R.string.share_app), actions.onShare) { ShareGlyph(Pal.text) },
+            FluidItem("", stringResource(R.string.split_menu), { showApps = true }) { AppsGlyph(Pal.text) },
         ),
         modifier = Modifier.align(Alignment.TopEnd).offset { androidx.compose.ui.unit.IntOffset(0, -scroll.value) }.padding(top = 48.dp, end = 20.dp),
     )

@@ -41,7 +41,7 @@ class AppContainer(app: Application) {
     )
 
     val engine: VpnEngine = createVpnEngine(app)
-    val connection = ConnectionController(backend, engine, appScope)
+    val connection = ConnectionController(backend, engine, appScope, onlyApps = { if (prefs.splitEnabled) prefs.splitApps.ifEmpty { null } else null })
 
     init {
         // Tell the controller when the underlying network changes (the VPN itself is excluded).

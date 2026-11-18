@@ -97,6 +97,10 @@ class IcsVpnEngine(private val context: Context) : VpnEngine, VpnStatus.StateLis
             parser.parseConfig(StringReader(profile.ovpnConfig))
             return parser.convertProfile().also {
                 it.mName = profile.serverName
+                profile.onlyApps?.takeIf { apps -> apps.isNotEmpty() }?.let { apps ->
+                    it.mAllowedAppsVpn = HashSet(apps)
+                    it.mAllowedAppsVpnAreDisallowed = false
+                }
                 // Keep credentials that are part of the profile itself unless the server supplies its own.
                 if (!profile.username.isNullOrBlank()) it.mUsername = profile.username
                 if (!profile.password.isNullOrBlank()) it.mPassword = profile.password

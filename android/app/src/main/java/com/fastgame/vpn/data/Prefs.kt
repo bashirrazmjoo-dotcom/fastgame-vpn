@@ -23,6 +23,15 @@ class Prefs(context: Context) {
         get() = sp.getInt("last_server_id", -1)
         set(value) = sp.edit().putInt("last_server_id", value).apply()
 
+    /** "Choose apps": when on, only [splitApps] go through the VPN; when off (or empty) every app does. */
+    var splitEnabled: Boolean
+        get() = sp.getBoolean("split_enabled", false)
+        set(value) = sp.edit().putBoolean("split_enabled", value).apply()
+
+    var splitApps: Set<String>
+        get() = sp.getStringSet("split_apps", emptySet()) ?: emptySet()
+        set(value) = sp.edit().putStringSet("split_apps", HashSet(value)).apply()
+
     var disclosureAccepted: Boolean
         get() = sp.getBoolean("disclosure_accepted", false)
         set(value) = sp.edit().putBoolean("disclosure_accepted", value).apply()

@@ -12,6 +12,8 @@ data class VpnProfile(
     val password: String?,
     /** Set for Xray servers: the session's vless:// link. Then the OpenVPN fields are unused. */
     val xrayLink: String? = null,
+    /** When set, only these packages are routed through the tunnel; null means every app. */
+    val onlyApps: Set<String>? = null,
 )
 
 sealed interface EngineState {

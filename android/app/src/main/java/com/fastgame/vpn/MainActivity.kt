@@ -114,6 +114,8 @@ class MainActivity : AppCompatActivity() {
                     onDismissNotice = vm::dismissNotice,
                     onAcceptDisclosure = { if (vm.acceptDisclosure()) beginConnect() },
                     onDeclineDisclosure = vm::declineDisclosure,
+                    loadAppFilter = vm::appFilter,
+                    onSaveAppFilter = vm::saveAppFilter,
                 )
                 HomeScreen(ui, conn, actions)
             }

@@ -95,6 +95,20 @@ class MainViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    fun appFilter(): Pair<Boolean, Set<String>> = container.prefs.splitEnabled to container.prefs.splitApps
+
+    /** Saves the app choice; a running session is restarted so it takes effect straight away. */
+    fun saveAppFilter(enabled: Boolean, apps: Set<String>) {
+        val prefs = container.prefs
+        val changed = prefs.splitEnabled != enabled || prefs.splitApps != apps
+        prefs.splitEnabled = enabled
+        prefs.splitApps = apps
+        val now = container.connection.state.value
+        if (changed && now.phase != Phase.IDLE) {
+            _ui.value.servers.firstOrNull { it.id == now.serverId }?.let { container.connection.switchServer(it) }
+        }
+    }
+
     /** Returns true when the UI may go on to ask for VPN permission and start the service. */
     fun requestConnect(): Boolean {
         if (!container.prefs.disclosureAccepted) {

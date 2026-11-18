@@ -55,7 +55,12 @@ class XrayVpnService : VpnService() {
                 .addDnsServer("1.1.1.1")
                 .addDnsServer("8.8.8.8")
                 .setMetered(false)
-            builder.addDisallowedApplication(packageName)
+            val only = XrayRuntime.pendingApps?.filter { it != packageName }.orEmpty()
+            XrayRuntime.pendingApps = null
+            var allowed = 0
+            for (pkg in only) if (runCatching { builder.addAllowedApplication(pkg) }.isSuccess) allowed++
+            // Nothing valid chosen: route everything except this app itself, as before.
+            if (allowed == 0) builder.addDisallowedApplication(packageName)
             val pfd = builder.establish() ?: throw IllegalStateException("The VPN permission was revoked.")
             tun = pfd
             XrayRuntime.stage = "core-start"

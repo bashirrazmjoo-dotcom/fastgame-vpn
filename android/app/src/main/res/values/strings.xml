@@ -75,4 +75,11 @@
     <string name="share_app">Share the app</string>
     <string name="share_text">FastGame VPN: fast and built for gaming.\n%1$s</string>
     <string name="server_list_title">Server lists</string>
+    <string name="split_menu">Choose apps</string>
+    <string name="split_title">Apps through the VPN</string>
+    <string name="split_switch">Only the apps I choose</string>
+    <string name="split_hint">When off, all apps go through the VPN. When on, only the ticked apps do.</string>
+    <string name="split_none">Tick at least one app, otherwise all apps use the VPN.</string>
+    <string name="split_search">Search apps</string>
+    <string name="split_done">Done</string>
 </resources>

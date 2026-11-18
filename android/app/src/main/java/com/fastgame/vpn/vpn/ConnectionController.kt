@@ -63,6 +63,7 @@ class ConnectionController(
     private val engine: VpnEngine,
     private val scope: CoroutineScope,
     private val nowMillis: () -> Long = { SystemClock.elapsedRealtime() },
+    private val onlyApps: () -> Set<String>? = { null },
 ) {
     private val _state = MutableStateFlow(ConnectionState())
     val state: StateFlow<ConnectionState> = _state.asStateFlow()
@@ -165,7 +166,7 @@ class ConnectionController(
             _state.update { it.copy(phase = Phase.CONNECTING) }
 
             xrayInUse = started.xrayLink != null
-            val profile = VpnProfile(server.name, started.ovpnConfig, started.authUsername, started.authPassword, started.xrayLink)
+            val profile = VpnProfile(server.name, started.ovpnConfig, started.authUsername, started.authPassword, started.xrayLink, onlyApps())
             withTimeoutOrNull(CONNECT_TIMEOUT_MS) { engine.connect(profile) }
                 ?: throw EngineException(
                     "Timed out while connecting." + engine.diagnostics().let { if (it.isBlank()) "" else "\n$it" },

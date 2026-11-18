@@ -75,4 +75,11 @@
     <string name="share_app">اشتراک‌گذاری برنامه</string>
     <string name="share_text">FastGame VPN، سریع و مخصوص بازی.\n%1$s</string>
     <string name="server_list_title">لیست سرورها</string>
+    <string name="split_menu">انتخاب برنامه‌ها</string>
+    <string name="split_title">برنامه‌هایی که از VPN رد شوند</string>
+    <string name="split_switch">فقط برنامه‌هایی که انتخاب می‌کنم</string>
+    <string name="split_hint">وقتی خاموش است همه برنامه‌ها از VPN رد می‌شوند. وقتی روشن است فقط برنامه‌های تیک‌خورده.</string>
+    <string name="split_none">دست‌کم یک برنامه را تیک بزن، وگرنه همه برنامه‌ها از VPN رد می‌شوند.</string>
+    <string name="split_search">جستجوی برنامه</string>
+    <string name="split_done">تمام</string>
 </resources>

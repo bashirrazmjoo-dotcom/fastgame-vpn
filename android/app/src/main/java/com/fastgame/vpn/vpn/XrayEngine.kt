@@ -40,6 +40,7 @@ class XrayEngine(private val context: Context) : VpnEngine {
         val probeNote = if (delay < 0) " (probe failed: $lastError)" else ""
 
         XrayRuntime.pendingConfig = XrayConfig.build(link, withTun = true)
+        XrayRuntime.pendingApps = profile.onlyApps
         XrayRuntime.stage = "service-start"
         val intent = Intent(context, XrayVpnService::class.java)
         try {
