@@ -220,6 +220,7 @@
     if (snap.language !== lang) { lang = snap.language; applyStatic(); }
     document.documentElement.dataset.theme = snap.theme;
     renderServers();
+    renderMode();
     renderConnect();
     renderMessages();
     renderTimer();
@@ -250,6 +251,13 @@
       $("licenses-dialog").querySelector("h3").textContent = t("share_app");
       $("licenses-dialog").showModal();
     }
+  }
+
+  function renderMode() {
+    const proxy = snap.mode === "proxy";
+    $("mode-badge").textContent = proxy ? "Proxy" : "LAN";
+    $("mode-badge").classList.toggle("on", proxy);
+    $("btn-mode").title = t(proxy ? "mode_hint_proxy" : "mode_hint_lan");
   }
 
   function setMenu(open) {
@@ -298,6 +306,12 @@
   $("btn-theme").onclick = () => { setMenu(false); invoke("set_theme", { theme: snap.theme === "dark" ? "light" : "dark" }); };
   $("btn-vip").onclick = (e) => (e.currentTarget.dataset.action === "share" ? share() : invoke("open_link", { link: "vip" }));
   $("btn-share-round").onclick = () => { setMenu(false); share(); };
+  $("btn-mode").onclick = () => {
+    setMenu(false);
+    const next = snap.mode === "proxy" ? "tun" : "proxy";
+    invoke("set_mode", { mode: next });
+    toast(t(next === "proxy" ? "mode_set_proxy" : "mode_set_lan"), 6000);
+  };
   $("btn-update").onclick = () => { setMenu(false); updateFromMenu(); };
   $("btn-support").onclick = (e) => invoke("open_link", { link: e.currentTarget.dataset.link });
   $("btn-privacy").onclick = () => invoke("open_link", { link: "privacy" });

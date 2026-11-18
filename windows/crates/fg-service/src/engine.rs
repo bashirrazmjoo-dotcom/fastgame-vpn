@@ -13,7 +13,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use async_trait::async_trait;
-use fg_core::engine::{EngineError, EngineState, VpnEngine, VpnProfile};
+use fg_core::engine::{ConnectMode, EngineError, EngineState, VpnEngine, VpnProfile};
 use fg_core::link::VlessLink;
 use fg_core::singbox::{self, TunOptions};
 use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
@@ -144,7 +144,14 @@ impl VpnEngine for SingBoxEngine {
         }
         let link = VlessLink::parse(profile.xray_link.as_deref().unwrap_or("")).map_err(|e| fail(e.to_string()))?;
         let ip = self.resolver.resolve(&link.host).await.map_err(|e| fail(format!("Could not find the server: {e}")))?;
-        let config = singbox::build(&link, ip, &self.tun).map_err(|e| fail(e.to_string()))?;
+        let config = match profile.mode {
+            ConnectMode::Tun => singbox::build(&link, ip, &self.tun),
+            ConnectMode::Proxy => match profile.proxy_port {
+                Some(port) => singbox::build_proxy(&link, ip, port, &self.tun),
+                None => return Err(fail("The local proxy port is missing.".into())),
+            },
+        }
+        .map_err(|e| fail(e.to_string()))?;
 
         tokio::fs::create_dir_all(&self.work_dir).await.map_err(|e| fail(format!("Cannot prepare the working folder: {e}")))?;
         let path = self.config_path();
@@ -261,7 +268,7 @@ mod tests {
     const LINK: &str = "vless://11111111-2222-3333-4444-555555555555@vpn.example.org:443?type=tcp&security=reality&sni=www.example.com&pbk=KEY&sid=ab&fp=chrome";
 
     fn profile() -> VpnProfile {
-        VpnProfile { name: "x".into(), kind: "xray".into(), xray_link: Some(LINK.into()), ovpn_config: String::new(), auth_username: None, auth_password: None }
+        VpnProfile { name: "x".into(), kind: "xray".into(), xray_link: Some(LINK.into()), ovpn_config: String::new(), auth_username: None, auth_password: None, mode: Default::default(), proxy_port: None }
     }
 
     /// A shell script standing in for sing-box. `body` runs after the config was copied to `seen.json`.
@@ -355,5 +362,27 @@ mod tests {
         e.connect(&profile()).await.unwrap();
         assert_eq!(e.state(), EngineState::Connected);
         e.disconnect().await;
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn proxy_mode_writes_a_listener_config_without_an_adapter() {
+        let (e, dir) = engine("echo 'sing-box started'; sleep 30");
+        let mut p = profile();
+        p.mode = ConnectMode::Proxy;
+        p.proxy_port = Some(18123);
+        e.connect(&p).await.unwrap();
+        let seen = std::fs::read_to_string(dir.join("seen.json")).unwrap();
+        assert!(seen.contains("\"mixed\"") && seen.contains("18123") && !seen.contains("\"tun\""));
+        e.disconnect().await;
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn proxy_mode_without_a_port_is_refused() {
+        let (e, _dir) = engine("echo 'sing-box started'; sleep 30");
+        let mut p = profile();
+        p.mode = ConnectMode::Proxy;
+        assert!(e.connect(&p).await.is_err());
     }
 }

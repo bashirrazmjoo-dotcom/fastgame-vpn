@@ -70,6 +70,8 @@ button:disabled { cursor: not-allowed; }
   display: flex; flex-direction: column; gap: 2px; background: var(--pop); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); }
 .menu-item { display: flex; align-items: center; gap: var(--s3); min-height: var(--tap); padding: 0 var(--s3); border: 0; border-radius: var(--r-md); background: none; text-align: start; font-size: var(--fs-md); }
 .menu-item:hover { background: var(--surface-2); }
+.menu-item .badge { margin-inline-start: auto; padding: 2px var(--s2); border-radius: 999px; font-size: var(--fs-sm, 12px); font-weight: 700; background: var(--surface-2); color: var(--text); border: 1px solid var(--border, currentColor); }
+.menu-item .badge.on { background: var(--teal-text); color: var(--bg, #fff); border-color: transparent; }
 .menu-item .dot { margin-inline-start: auto; width: 10px; height: 10px; border-radius: 50%; background: var(--teal-text); }
 
 /* ---- cards ---- */

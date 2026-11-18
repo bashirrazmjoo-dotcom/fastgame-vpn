@@ -20,7 +20,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::api::{ApiError, CallError};
 use crate::backend::Backend;
-use crate::engine::{EngineState, VpnEngine, VpnProfile};
+use crate::engine::{ConnectMode, EngineState, VpnEngine, VpnProfile};
 use crate::model::{parse_iso_millis, ServerInfo, SessionState, SessionStatus};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -55,11 +55,16 @@ pub struct ConnectionState {
     /// Seconds of free time left; `None` when unlimited (VIP) or unknown.
     pub remaining_seconds: Option<i64>,
     pub notice: Option<Notice>,
+    /// How this connection was started, and the local proxy port when that is proxy mode.
+    #[serde(default)]
+    pub mode: ConnectMode,
+    #[serde(default)]
+    pub proxy_port: Option<u16>,
 }
 
 impl ConnectionState {
     pub fn idle() -> Self {
-        Self { phase: Phase::Idle, server_id: None, is_vip: false, remaining_seconds: None, notice: None }
+        Self { phase: Phase::Idle, server_id: None, is_vip: false, remaining_seconds: None, notice: None, mode: ConnectMode::Tun, proxy_port: None }
     }
 }
 
@@ -68,6 +73,11 @@ const NETWORK_GRACE: Duration = Duration::from_secs(180);
 const MIN_HEARTBEAT_SECONDS: u32 = 5;
 const MAX_FAILED_ATTEMPTS: u32 = 6;
 const MAX_ENGINE_FAILURES: u32 = 2;
+
+/// A currently free loopback port (the OS picks it; it is released again right away).
+fn free_loopback_port() -> Option<u16> {
+    std::net::TcpListener::bind(("127.0.0.1", 0)).ok().and_then(|l| l.local_addr().ok()).map(|a| a.port()).filter(|p| *p >= 1024)
+}
 
 fn backoff(failures: u32) -> Duration {
     Duration::from_millis(match failures {
@@ -120,17 +130,28 @@ impl ConnectionController {
         self.inner.state.borrow().clone()
     }
 
-    /// Returns false if a session is already running.
+    /// Returns false if a session is already running. Whole-system mode.
     pub fn connect(&self, server: ServerInfo) -> bool {
+        self.connect_with(server, ConnectMode::Tun)
+    }
+
+    /// Like `connect`, with the chosen mode. In proxy mode a free loopback port is picked here and
+    /// kept for every retry of this connection, so the system proxy setting stays valid.
+    pub fn connect_with(&self, server: ServerInfo, mode: ConnectMode) -> bool {
         let mut run = self.run.lock().unwrap();
         if matches!(&*run, Some((h, _)) if !h.is_finished()) {
             return false;
         }
-        self.inner.state.send_replace(ConnectionState { phase: Phase::Starting, server_id: Some(server.id), ..ConnectionState::idle() });
+        let proxy_port = if mode == ConnectMode::Proxy { free_loopback_port() } else { None };
+        if mode == ConnectMode::Proxy && proxy_port.is_none() {
+            self.inner.state.send_replace(ConnectionState { notice: Some(Notice::EngineFailed { reason: "No free local port for the proxy.".into() }), ..ConnectionState::idle() });
+            return true;
+        }
+        self.inner.state.send_replace(ConnectionState { phase: Phase::Starting, server_id: Some(server.id), mode, proxy_port, ..ConnectionState::idle() });
         let cancel = CancellationToken::new();
         let inner = self.inner.clone();
         let token = cancel.clone();
-        let handle = tokio::spawn(async move { inner.run_session(server, token).await });
+        let handle = tokio::spawn(async move { inner.run_session(server, token, mode, proxy_port).await });
         *run = Some((handle, cancel));
         true
     }
@@ -156,11 +177,11 @@ impl ConnectionController {
 }
 
 impl Inner {
-    async fn run_session(self: Arc<Self>, server: ServerInfo, cancel: CancellationToken) {
+    async fn run_session(self: Arc<Self>, server: ServerInfo, cancel: CancellationToken, mode: ConnectMode, proxy_port: Option<u16>) {
         let mut failures = 0u32;
         let mut final_notice = None;
         loop {
-            let Ok(outcome) = self.run_once(&server, &cancel).await else { break };
+            let Ok(outcome) = self.run_once(&server, &cancel, mode, proxy_port).await else { break };
             let notice = outcome.notice;
             if matches!(notice, Notice::QuotaExhausted { .. } | Notice::Blocked) {
                 final_notice = Some(notice);
@@ -187,13 +208,13 @@ impl Inner {
 
     /// One session: start, tunnel, heartbeat. `Err(Cancelled)` means the user pressed disconnect.
     /// Cleanup always runs, also on cancellation, and is never interrupted.
-    async fn run_once(&self, server: &ServerInfo, cancel: &CancellationToken) -> Result<Outcome, Cancelled> {
+    async fn run_once(&self, server: &ServerInfo, cancel: &CancellationToken, mode: ConnectMode, proxy_port: Option<u16>) -> Result<Outcome, Cancelled> {
         let session_id: Mutex<Option<String>> = Mutex::new(None);
         let connected = Mutex::new(false);
 
         let result = tokio::select! {
             _ = cancel.cancelled() => Err(Cancelled),
-            notice = self.attempt(server, &session_id, &connected) => Ok(notice),
+            notice = self.attempt(server, &session_id, &connected, mode, proxy_port) => Ok(notice),
         };
 
         self.engine.disconnect().await;
@@ -206,7 +227,7 @@ impl Inner {
         result.map(|notice| Outcome { notice, connected })
     }
 
-    async fn attempt(&self, server: &ServerInfo, session_id: &Mutex<Option<String>>, connected: &Mutex<bool>) -> Notice {
+    async fn attempt(&self, server: &ServerInfo, session_id: &Mutex<Option<String>>, connected: &Mutex<bool>, mode: ConnectMode, proxy_port: Option<u16>) -> Notice {
         let started = match self.backend.start_session(server.id).await {
             Ok(s) => s,
             Err(e) => return notice_for_call(e),
@@ -215,7 +236,7 @@ impl Inner {
         self.anchor(started.is_vip, started.remaining_seconds);
         self.state.send_modify(|s| s.phase = Phase::Connecting);
 
-        let profile = VpnProfile::from_session(&server.name, &started);
+        let profile = VpnProfile::from_session(&server.name, &started).with_mode(mode, proxy_port);
         match timeout(CONNECT_TIMEOUT, self.engine.connect(&profile)).await {
             Ok(Ok(())) => {}
             Ok(Err(e)) => return Notice::EngineFailed { reason: e.0 },

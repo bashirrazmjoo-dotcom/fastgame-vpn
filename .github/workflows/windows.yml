@@ -47,6 +47,9 @@ jobs:
             cargo run -q --locked -p fg-core --example dump_config -- "vless://$ID@vpn.example.org:443?$q" 203.0.113.7 > c$i.json
             "$SB" check -c c$i.json
           done
+          # proxy mode (no adapter): same links, local listener only
+          cargo run -q --locked -p fg-core --example dump_config -- "vless://$ID@vpn.example.org:443?type=tcp&security=reality&sni=www.example.com&pbk=$KEY&sid=ab12&fp=chrome&flow=xtls-rprx-vision" 203.0.113.7 18080 > p.json
+          "$SB" check -c p.json
 
   build-windows:
     needs: test-linux

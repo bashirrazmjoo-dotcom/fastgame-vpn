@@ -22,6 +22,9 @@ pub struct Stored {
     pub theme: Option<String>,
     #[serde(default)]
     pub last_server_id: Option<u32>,
+    /// "tun" (whole system, the default) or "proxy" (Windows system proxy).
+    #[serde(default)]
+    pub mode: Option<String>,
 }
 
 pub struct FileStore {

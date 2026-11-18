@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use fg_core::api::CallError;
 use fg_core::backend::Backend;
 use fg_core::controller::{ConnectionController, ConnectionState, Phase};
+use fg_core::engine::ConnectMode;
 use fg_core::model::{Account, AppConfig, ServerInfo};
 use serde::Serialize;
 use tokio::sync::watch;
@@ -59,6 +60,8 @@ pub struct Snapshot {
     pub load_error: Option<String>,
     pub language: String,
     pub theme: String,
+    /// "tun" = the whole system goes through the VPN adapter (default); "proxy" = Windows system proxy.
+    pub mode: String,
 }
 
 #[derive(Default)]
@@ -96,6 +99,7 @@ impl AppCore {
             load_error: None,
             language: store.get().language.unwrap_or_else(|| "fa".into()),
             theme: store.get().theme.unwrap_or_else(|| "dark".into()),
+            mode: store.get().mode.filter(|m| m == "proxy").unwrap_or_else(|| "tun".into()),
         };
         let (out, _) = watch::channel(initial);
         let core = Arc::new(Self { backend, controller, store, version_code, update_check_enabled, data: Mutex::new(Data { selected, loading: true, ..Default::default() }), out });
@@ -154,6 +158,7 @@ impl AppCore {
             load_error: d.load_error.clone(),
             language: stored.language.unwrap_or_else(|| "fa".into()),
             theme: stored.theme.unwrap_or_else(|| "dark".into()),
+            mode: stored.mode.filter(|m| m == "proxy").unwrap_or_else(|| "tun".into()),
         };
         drop(d);
         self.out.send_replace(snap);
@@ -213,6 +218,11 @@ impl AppCore {
         if !running || self.snapshot().selected_server_id == before.selected_server_id {
             return;
         }
+        self.restart().await;
+    }
+
+    /// Closes the running connection and starts a new one with the current choices.
+    async fn restart(&self) {
         self.disconnect();
         let mut rx = self.subscribe();
         let _ = tokio::time::timeout(std::time::Duration::from_secs(20), rx.wait_for(|s| s.connection.phase == Phase::Idle)).await;
@@ -225,6 +235,23 @@ impl AppCore {
         }
     }
 
+    fn mode(&self) -> ConnectMode {
+        if self.store.get().mode.as_deref() == Some("proxy") { ConnectMode::Proxy } else { ConnectMode::Tun }
+    }
+
+    /// "tun" or "proxy". While connected, the connection restarts in the new mode.
+    pub async fn set_mode(&self, mode: &str) {
+        if !matches!(mode, "tun" | "proxy") || self.snapshot().mode == mode {
+            return;
+        }
+        let running = self.snapshot().connection.phase != Phase::Idle;
+        self.store.update(|s| s.mode = Some(mode.to_string()));
+        self.publish();
+        if running {
+            self.restart().await;
+        }
+    }
+
     /// Returns false when nothing could be started (no server chosen, blocked, already running).
     pub fn connect(&self) -> bool {
         let server = {
@@ -232,7 +259,7 @@ impl AppCore {
             d.selected.and_then(|id| d.servers.iter().find(|s| s.id == id).cloned())
         };
         match server {
-            Some(s) => self.controller.connect(s),
+            Some(s) => self.controller.connect_with(s, self.mode()),
             None => false,
         }
     }
@@ -373,6 +400,35 @@ mod tests {
         c.switch_server(9).await;
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         assert_eq!(c.snapshot().connection.server_id, Some(9));
+    }
+
+    #[tokio::test]
+    async fn mode_defaults_to_whole_system_and_is_validated() {
+        let c = core(vec![server(7, "xray")], false, 0, true, "mode");
+        assert_eq!(c.snapshot().mode, "tun");
+        c.set_mode("socks").await;
+        assert_eq!(c.snapshot().mode, "tun");
+        c.set_mode("proxy").await;
+        assert_eq!(c.snapshot().mode, "proxy");
+        c.set_mode("tun").await;
+        assert_eq!(c.snapshot().mode, "tun");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn proxy_mode_connection_reports_its_port_and_changing_mode_reconnects() {
+        let c = core(vec![server(7, "xray")], false, 0, true, "mode-run");
+        c.refresh().await;
+        c.set_mode("proxy").await;
+        assert!(c.connect());
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        let s = c.snapshot().connection;
+        assert_eq!(s.mode, ConnectMode::Proxy);
+        assert!(s.proxy_port.is_some_and(|p| p >= 1024));
+        c.set_mode("tun").await; // restarts in whole-system mode
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        let s = c.snapshot().connection;
+        assert_eq!((s.mode, s.proxy_port), (ConnectMode::Tun, None));
+        assert_ne!(s.phase, Phase::Idle);
     }
 
     #[tokio::test]

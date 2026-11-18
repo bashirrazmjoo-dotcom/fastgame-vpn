@@ -17,7 +17,7 @@ use tokio::time::timeout;
 
 use crate::engine::{EngineError, EngineState, VpnEngine, VpnProfile};
 
-pub const PROTOCOL_VERSION: u32 = 1;
+pub const PROTOCOL_VERSION: u32 = 2; // 2: profile carries the connect mode
 pub const MAX_FRAME: usize = 64 * 1024;
 /// The service tears the tunnel down when it hears nothing from the app for this long.
 pub const WATCHDOG_SECONDS: u64 = 20;
@@ -303,6 +303,8 @@ mod tests {
             ovpn_config: String::new(),
             auth_username: None,
             auth_password: None,
+            mode: Default::default(),
+            proxy_port: None,
         }
     }
 

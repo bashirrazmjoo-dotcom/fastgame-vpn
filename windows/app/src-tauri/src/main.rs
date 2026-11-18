@@ -2,6 +2,7 @@
 
 mod config;
 mod pipe;
+mod proxy;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -131,6 +132,11 @@ async fn set_theme(core: State<'_, Core>, theme: String) -> Result<(), ()> {
     core.0.set_theme(&theme);
     Ok(())
 }
+#[tauri::command]
+async fn set_mode(core: State<'_, Core>, mode: String) -> Result<(), ()> {
+    core.0.set_mode(&mode).await;
+    Ok(())
+}
 /// The page names a link; it never supplies a URL.
 #[tauri::command]
 async fn open_link(app: tauri::AppHandle, core: State<'_, Core>, link: String) -> Result<(), ()> {
@@ -180,8 +186,43 @@ fn quit_gracefully(app: tauri::AppHandle) {
             let mut rx = core.subscribe();
             let _ = tokio::time::timeout(Duration::from_secs(8), rx.wait_for(|s| s.connection.phase == Phase::Idle)).await;
         }
+        proxy::restore_now();
         app.exit(0);
     });
+}
+
+/// Keeps the Windows proxy in step with the connection: set while a proxy-mode connection is up,
+/// restored whenever it is not (disconnected, or switched back to whole-system mode).
+async fn proxy_watcher(mut rx: tokio::sync::watch::Receiver<Snapshot>) {
+    let mut guard_started = false;
+    let mut applied: Option<u16> = None;
+    loop {
+        let (phase, mode, port) = {
+            let s = rx.borrow_and_update();
+            (s.connection.phase, s.connection.mode, s.connection.proxy_port)
+        };
+        let want = if phase == Phase::Connected && mode == fg_core::engine::ConnectMode::Proxy { port } else { None };
+        match (want, applied) {
+            (Some(p), a) if a != Some(p) => {
+                if !guard_started {
+                    proxy::spawn_guard();
+                    guard_started = true;
+                }
+                match proxy::apply(p) {
+                    Ok(()) => applied = Some(p),
+                    Err(e) => tracing::warn!("could not set the Windows proxy: {e}"),
+                }
+            }
+            (None, Some(_)) if matches!(phase, Phase::Idle | Phase::Disconnecting) || mode != fg_core::engine::ConnectMode::Proxy => {
+                proxy::restore_now();
+                applied = None;
+            }
+            _ => {}
+        }
+        if rx.changed().await.is_err() {
+            break;
+        }
+    }
 }
 
 fn show_main(app: &tauri::AppHandle) {
@@ -239,6 +280,10 @@ fn install_crash_report() {
 }
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if proxy::handle_cli(&args) {
+        return;
+    }
     install_crash_report();
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
@@ -251,7 +296,10 @@ fn main() {
         .plugin(tauri_plugin_notification::init())
         .manage(Updates::default())
         .setup(|app| {
+            // A proxy setting left behind by a crash or a power cut is undone before anything else.
+            proxy::restore_now();
             let core = tauri::async_runtime::block_on(async { build_core() })?;
+            tauri::async_runtime::spawn(proxy_watcher(core.subscribe()));
             let mut rx = core.subscribe();
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -273,7 +321,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            snapshot, refresh, connect, disconnect, dismiss_notice, select_server, set_language, set_theme, open_link, check_update, install_update
+            snapshot, refresh, connect, disconnect, dismiss_notice, select_server, set_mode, set_language, set_theme, open_link, check_update, install_update
         ])
         .run(tauri::generate_context!())
         .expect("error while running FastGame");

@@ -15,6 +15,16 @@ pub enum EngineState {
     Failed(String),
 }
 
+/// How the device is connected. `Tun` sends the whole system through the VPN adapter;
+/// `Proxy` only starts a local proxy for the apps that follow the Windows proxy setting.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ConnectMode {
+    #[default]
+    Tun,
+    Proxy,
+}
+
 /// Everything the engine needs for one session; comes straight from the backend's answer.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VpnProfile {
@@ -24,6 +34,12 @@ pub struct VpnProfile {
     pub ovpn_config: String,
     pub auth_username: Option<String>,
     pub auth_password: Option<String>,
+    /// Absent in older callers: the whole system, as before.
+    #[serde(default)]
+    pub mode: ConnectMode,
+    /// Loopback port of the local proxy (proxy mode only).
+    #[serde(default)]
+    pub proxy_port: Option<u16>,
 }
 
 impl VpnProfile {
@@ -35,7 +51,15 @@ impl VpnProfile {
             ovpn_config: s.ovpn_config.clone(),
             auth_username: s.auth_username.clone(),
             auth_password: s.auth_password.clone(),
+            mode: ConnectMode::Tun,
+            proxy_port: None,
         }
+    }
+
+    pub fn with_mode(mut self, mode: ConnectMode, proxy_port: Option<u16>) -> Self {
+        self.mode = mode;
+        self.proxy_port = proxy_port;
+        self
     }
 }
 

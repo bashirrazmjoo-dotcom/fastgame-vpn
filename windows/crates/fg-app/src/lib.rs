@@ -4,4 +4,5 @@
 pub mod app;
 pub mod machine;
 pub mod store;
+pub mod sysproxy;
 pub mod updater;

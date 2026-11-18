@@ -21,6 +21,8 @@ pub enum ConfigError {
     Security(String),
     #[error("The server link has no Reality key.")]
     NoRealityKey,
+    #[error("The local proxy port is invalid.")]
+    BadPort,
 }
 
 #[derive(Debug, Clone)]
@@ -79,6 +81,39 @@ pub fn build(link: &VlessLink, server_ip: IpAddr, opts: &TunOptions) -> Result<V
                 { "action": "sniff" },
                 { "protocol": "dns", "action": "hijack-dns" }
             ],
+            "final": PROXY_TAG
+        }
+    }))
+}
+
+/// Proxy mode: no adapter and no route changes. sing-box only listens on 127.0.0.1:`port` (HTTP and SOCKS)
+/// for the apps that follow the Windows proxy setting; domain names are resolved by the VPN server.
+pub fn build_proxy(link: &VlessLink, server_ip: IpAddr, port: u16, opts: &TunOptions) -> Result<Value, ConfigError> {
+    if port < 1024 {
+        return Err(ConfigError::BadPort);
+    }
+    Ok(json!({
+        "log": { "level": "info", "timestamp": true },
+        "dns": {
+            "servers": [
+                { "type": "tcp", "tag": "dns-remote", "server": opts.dns_server.to_string(), "detour": PROXY_TAG }
+            ],
+            "final": "dns-remote",
+            "strategy": "ipv4_only"
+        },
+        "inbounds": [{
+            "type": "mixed",
+            "tag": "mixed-in",
+            "listen": "127.0.0.1",
+            "listen_port": port
+        }],
+        "outbounds": [
+            vless_outbound(link, server_ip)?,
+            { "type": "direct", "tag": "direct" }
+        ],
+        "route": {
+            "auto_detect_interface": true,
+            "rules": [ { "action": "sniff" } ],
             "final": PROXY_TAG
         }
     }))
@@ -235,5 +270,24 @@ mod tests {
     #[test]
     fn plain_tcp_has_no_tls() {
         assert!(cfg("type=tcp&security=none")["outbounds"][0].get("tls").is_none());
+    }
+
+    #[test]
+    fn proxy_mode_listens_on_loopback_only_and_changes_no_routes() {
+        let c = build_proxy(&link("type=tcp&security=none"), IP.parse().unwrap(), 18080, &TunOptions::default()).unwrap();
+        let inb = &c["inbounds"];
+        assert_eq!(inb.as_array().unwrap().len(), 1);
+        assert_eq!(inb[0]["type"], "mixed");
+        assert_eq!(inb[0]["listen"], "127.0.0.1");
+        assert_eq!(inb[0]["listen_port"], 18080);
+        assert!(inb[0].get("set_system_proxy").is_none());
+        assert_eq!(c["route"]["final"], PROXY_TAG);
+        assert!(c.to_string().find("\"tun\"").is_none(), "no adapter in proxy mode");
+    }
+
+    #[test]
+    fn proxy_mode_rejects_privileged_ports() {
+        let e = build_proxy(&link("type=tcp"), IP.parse().unwrap(), 80, &TunOptions::default()).unwrap_err();
+        assert!(matches!(e, ConfigError::BadPort));
     }
 }
