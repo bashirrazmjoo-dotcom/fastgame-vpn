@@ -56,7 +56,7 @@ class ConnectionControllerTest {
     private val server = VpnServerInfo(1, "de-1", "DE", "Germany", "آلمان")
 
     private fun TestScope.controller(b: Backend, e: VpnEngine) =
-        ConnectionController(b, e, backgroundScope) { currentTime }
+        ConnectionController(b, e, backgroundScope, nowMillis = { currentTime })
 
     @Test fun connectsHeartbeatsAndDisconnects() = runTest {
         val b = FakeBackend(); val e = FakeEngine(); val c = controller(b, e)
