@@ -32,6 +32,11 @@ class Prefs(context: Context) {
         get() = sp.getStringSet("split_apps", emptySet()) ?: emptySet()
         set(value) = sp.edit().putStringSet("split_apps", HashSet(value)).apply()
 
+    /** "Always stay connected": keeps the CPU awake while connected (more battery). Off by default. */
+    var keepAlive: Boolean
+        get() = sp.getBoolean("keep_alive", false)
+        set(value) = sp.edit().putBoolean("keep_alive", value).apply()
+
     var disclosureAccepted: Boolean
         get() = sp.getBoolean("disclosure_accepted", false)
         set(value) = sp.edit().putBoolean("disclosure_accepted", value).apply()

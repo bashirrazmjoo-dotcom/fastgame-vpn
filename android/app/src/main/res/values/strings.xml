@@ -86,4 +86,9 @@
     <string name="battery_text">With the screen off for a while, Android pauses apps and the VPN can drop. Allow FastGame to run in the background to keep it connected.</string>
     <string name="battery_allow">Allow</string>
     <string name="battery_later">Not now</string>
+    <string name="keep_menu">Background</string>
+    <string name="keep_title">Background use</string>
+    <string name="keep_switch">Always stay connected</string>
+    <string name="keep_off_hint">Off: saves battery. Android may pause the app after a long idle time with the screen off.</string>
+    <string name="keep_on_hint">On: stays connected in the background even when the phone is idle. Uses more battery. If asked, allow FastGame in the battery settings.</string>
 </resources>

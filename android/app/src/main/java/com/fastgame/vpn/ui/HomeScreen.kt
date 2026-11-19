@@ -86,6 +86,7 @@ class HomeActions(
     val onDeclineDisclosure: () -> Unit,
     val loadAppFilter: () -> Pair<Boolean, Set<String>> = { false to emptySet() },
     val onSaveAppFilter: (Boolean, Set<String>) -> Unit = { _, _ -> },
+    val onKeepAlive: () -> Unit = {},
 )
 
 @Composable
@@ -198,6 +199,7 @@ private fun Content(ui: HomeUiState, conn: ConnectionState, actions: HomeActions
             FluidItem("", stringResource(R.string.change_theme), actions.onToggleTheme) { ThemeGlyph(sun = !Pal.light, color = Pal.text) },
             FluidItem("", stringResource(R.string.share_app), actions.onShare) { ShareGlyph(Pal.text) },
             FluidItem("", stringResource(R.string.split_menu), { showApps = true }) { AppsGlyph(Pal.text) },
+            FluidItem("", stringResource(R.string.keep_menu), actions.onKeepAlive) { BatteryGlyph(Pal.text) },
         ),
         modifier = Modifier.align(Alignment.TopEnd).offset { androidx.compose.ui.unit.IntOffset(0, -scroll.value) }.padding(top = 48.dp, end = 20.dp),
     )

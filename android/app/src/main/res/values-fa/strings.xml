@@ -86,4 +86,9 @@
     <string name="battery_text">وقتی مدتی صفحه خاموش است، اندروید برنامه‌ها را متوقف می‌کند و VPN ممکن است قطع شود. اجازه بده FastGame در پس‌زمینه کار کند تا اتصال بماند.</string>
     <string name="battery_allow">اجازه می‌دهم</string>
     <string name="battery_later">فعلاً نه</string>
+    <string name="keep_menu">پس‌زمینه</string>
+    <string name="keep_title">کار در پس‌زمینه</string>
+    <string name="keep_switch">همیشه وصل بماند</string>
+    <string name="keep_off_hint">خاموش: باتری کمتر مصرف می‌شود. ممکن است اندروید بعد از بی‌کاری طولانی با صفحه خاموش برنامه را متوقف کند.</string>
+    <string name="keep_on_hint">روشن: حتی وقتی گوشی بی‌کار است در پس‌زمینه وصل می‌ماند. باتری بیشتری مصرف می‌کند. اگر پرسید، در تنظیمات باتری به FastGame اجازه بده.</string>
 </resources>

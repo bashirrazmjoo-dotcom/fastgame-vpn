@@ -39,13 +39,18 @@ class ConnectionService : Service() {
         val type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED else 0
         ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(container.connection.state.value), type)
 
-        // Keep the CPU awake while a session runs so the heartbeat and auto-reconnect work with the screen off.
-        if (wakeLock == null) {
-            wakeLock = runCatching {
-                getSystemService(android.os.PowerManager::class.java)
-                    .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "fastgame:session")
-                    .apply { setReferenceCounted(false); acquire(8 * 60 * 60 * 1000L) }
-            }.getOrNull()
+        // Default: no wake lock (battery friendly). "Always stay connected" keeps the CPU awake during a session.
+        if (container.prefs.keepAlive) {
+            if (wakeLock == null) {
+                wakeLock = runCatching {
+                    getSystemService(android.os.PowerManager::class.java)
+                        .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "fastgame:session")
+                        .apply { setReferenceCounted(false); acquire(8 * 60 * 60 * 1000L) }
+                }.getOrNull()
+            }
+        } else {
+            runCatching { wakeLock?.takeIf { it.isHeld }?.release() }
+            wakeLock = null
         }
 
         if (observer == null) {
@@ -75,7 +80,7 @@ class ConnectionService : Service() {
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.notification_channel),
-            NotificationManager.IMPORTANCE_LOW,
+            NotificationManager.IMPORTANCE_MIN,
         )
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }

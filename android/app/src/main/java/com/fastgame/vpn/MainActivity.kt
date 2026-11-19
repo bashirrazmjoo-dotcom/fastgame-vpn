@@ -31,11 +31,18 @@ import com.fastgame.vpn.vpn.Phase
 import java.util.Locale
 
 private const val SUPPORT_URL = "https://t.me/fastgamevpn"
+private const val TEST_URL = "https://github.com/bashirrazmjoo-dotcom/fastgame-vpn/releases/download/latest/FastGameVPN-small.apk"
 private const val SHARE_URL = "https://github.com/bashirrazmjoo-dotcom/fastgame-vpn/releases/download/stable/FastGameVPN.apk"
 
 class MainActivity : AppCompatActivity() {
 
     private val container get() = (application as FastGameApp).container
+    private var keepOpener: () -> Unit = {}
+
+    /** Foreground service that keeps this process (heartbeat + auto-reconnect) alive while connected. */
+    private fun startKeepService() {
+        runCatching { ContextCompat.startForegroundService(this, Intent(this, com.fastgame.vpn.vpn.ConnectionService::class.java)) }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,7 +62,7 @@ class MainActivity : AppCompatActivity() {
                 fun startService() {
                     // The OpenVPN engine runs as the foreground VPN service (one "connected" notification)
                     // and keeps the process, and with it the heartbeat loop, alive.
-                    vm.startConnection()
+                    if (vm.startConnection()) startKeepService()
                 }
 
                 val vpnPermission = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -102,7 +109,8 @@ class MainActivity : AppCompatActivity() {
                         }
                         startActivity(Intent.createChooser(send, getString(R.string.share_app)))
                     },
-                    onUpdate = { ui.config?.updateUrl?.takeIf { it.isNotBlank() }?.let { open(it) } },
+                    // Test builds (debug key) update from the test channel; the real-key APK would be refused as a different signature.
+                    onUpdate = { (if (BuildConfig.DEBUG) TEST_URL else ui.config?.updateUrl?.takeIf { it.isNotBlank() })?.let { open(it) } },
                     onPrivacy = { ui.config?.let { open(it.privacyPolicyUrl) } },
                     onToggleLanguage = {
                         val next = if (Locale.getDefault().language == "fa") "en" else "fa"
@@ -115,44 +123,48 @@ class MainActivity : AppCompatActivity() {
                     onDismissNotice = vm::dismissNotice,
                     onAcceptDisclosure = { if (vm.acceptDisclosure()) beginConnect() },
                     onDeclineDisclosure = vm::declineDisclosure,
+                    onKeepAlive = { keepOpener() },
                     loadAppFilter = vm::appFilter,
                     onSaveAppFilter = vm::saveAppFilter,
                 )
                 HomeScreen(ui, conn, actions)
 
-                // Android's idle mode (Doze) pauses the heartbeat after a while with the screen off; the
-                // user is asked once, after the first connection, to let the app run in the background.
-                var askBattery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-                androidx.compose.runtime.LaunchedEffect(conn.phase) {
-                    val pm = getSystemService(android.os.PowerManager::class.java)
-                    if (conn.phase == com.fastgame.vpn.vpn.Phase.CONNECTED && !pm.isIgnoringBatteryOptimizations(packageName) &&
-                        !uiPrefs.getBoolean("battery_asked", false)
-                    ) askBattery = true
-                }
-                if (askBattery) {
+                var showKeep by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+                var keepOn by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(container.prefs.keepAlive) }
+                if (showKeep) {
                     androidx.compose.material3.AlertDialog(
-                        onDismissRequest = { askBattery = false },
-                        title = { androidx.compose.material3.Text(getString(R.string.battery_title)) },
-                        text = { androidx.compose.material3.Text(getString(R.string.battery_text)) },
-                        confirmButton = {
-                            androidx.compose.material3.TextButton(onClick = {
-                                askBattery = false
-                                uiPrefs.edit().putBoolean("battery_asked", true).apply()
-                                runCatching {
-                                    startActivity(
-                                        Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")),
-                                    )
+                        onDismissRequest = { showKeep = false },
+                        title = { androidx.compose.material3.Text(getString(R.string.keep_title)) },
+                        text = {
+                            androidx.compose.foundation.layout.Column {
+                                androidx.compose.foundation.layout.Row(
+                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                ) {
+                                    androidx.compose.material3.Text(getString(R.string.keep_switch), Modifier.weight(1f))
+                                    androidx.compose.material3.Switch(keepOn, { on ->
+                                        keepOn = on
+                                        container.prefs.keepAlive = on
+                                        if (on) {
+                                            val pm = getSystemService(android.os.PowerManager::class.java)
+                                            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                                                runCatching { startActivity(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
+                                            }
+                                        }
+                                        if (conn.phase != com.fastgame.vpn.vpn.Phase.IDLE) startKeepService()
+                                    })
                                 }
-                            }) { androidx.compose.material3.Text(getString(R.string.battery_allow)) }
+                                androidx.compose.material3.Text(
+                                    getString(if (keepOn) R.string.keep_on_hint else R.string.keep_off_hint),
+                                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                                )
+                            }
                         },
-                        dismissButton = {
-                            androidx.compose.material3.TextButton(onClick = {
-                                askBattery = false
-                                uiPrefs.edit().putBoolean("battery_asked", true).apply()
-                            }) { androidx.compose.material3.Text(getString(R.string.battery_later)) }
+                        confirmButton = {
+                            androidx.compose.material3.TextButton(onClick = { showKeep = false }) { androidx.compose.material3.Text(getString(R.string.split_done)) }
                         },
                     )
                 }
+                keepOpener = { showKeep = true }
             }
         }
     }

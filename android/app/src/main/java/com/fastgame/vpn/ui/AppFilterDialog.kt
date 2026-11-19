@@ -169,3 +169,16 @@ private fun AppIcon(pkg: String) {
         bitmap?.let { Image(it.asImageBitmap(), null, Modifier.fillMaxSize()) }
     }
 }
+
+/** Menu glyph: a small battery. */
+@Composable
+fun BatteryGlyph(color: Color) {
+    Canvas(Modifier.size(20.dp)) {
+        val w = size.width
+        val h = 11.dp.toPx()
+        val top = (size.height - h) / 2
+        drawRoundRect(color, Offset(0f, top), Size(w - 3.dp.toPx(), h), CornerRadius(3.dp.toPx()), style = androidx.compose.ui.graphics.drawscope.Stroke(1.8.dp.toPx()))
+        drawRoundRect(color, Offset(w - 2.5.dp.toPx(), top + 3.5.dp.toPx()), Size(2.5.dp.toPx(), 4.dp.toPx()), CornerRadius(1.dp.toPx()))
+        drawRoundRect(color, Offset(3.dp.toPx(), top + 3.dp.toPx()), Size(7.dp.toPx(), h - 6.dp.toPx()), CornerRadius(1.dp.toPx()))
+    }
+}
