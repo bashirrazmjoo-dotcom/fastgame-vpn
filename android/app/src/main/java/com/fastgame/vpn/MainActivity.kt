@@ -118,6 +118,40 @@ class MainActivity : AppCompatActivity() {
                     onSaveAppFilter = vm::saveAppFilter,
                 )
                 HomeScreen(ui, conn, actions)
+
+                // Android's idle mode (Doze) pauses the heartbeat after a while with the screen off; the
+                // user is asked once, after the first connection, to let the app run in the background.
+                var askBattery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+                androidx.compose.runtime.LaunchedEffect(conn.phase) {
+                    val pm = getSystemService(android.os.PowerManager::class.java)
+                    if (conn.phase == com.fastgame.vpn.vpn.Phase.CONNECTED && !pm.isIgnoringBatteryOptimizations(packageName) &&
+                        !uiPrefs.getBoolean("battery_asked", false)
+                    ) askBattery = true
+                }
+                if (askBattery) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { askBattery = false },
+                        title = { androidx.compose.material3.Text(getString(R.string.battery_title)) },
+                        text = { androidx.compose.material3.Text(getString(R.string.battery_text)) },
+                        confirmButton = {
+                            androidx.compose.material3.TextButton(onClick = {
+                                askBattery = false
+                                uiPrefs.edit().putBoolean("battery_asked", true).apply()
+                                runCatching {
+                                    startActivity(
+                                        Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")),
+                                    )
+                                }
+                            }) { androidx.compose.material3.Text(getString(R.string.battery_allow)) }
+                        },
+                        dismissButton = {
+                            androidx.compose.material3.TextButton(onClick = {
+                                askBattery = false
+                                uiPrefs.edit().putBoolean("battery_asked", true).apply()
+                            }) { androidx.compose.material3.Text(getString(R.string.battery_later)) }
+                        },
+                    )
+                }
             }
         }
     }

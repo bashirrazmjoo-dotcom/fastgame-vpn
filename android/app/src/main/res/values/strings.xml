@@ -82,4 +82,8 @@
     <string name="split_none">Tick at least one app, otherwise all apps use the VPN.</string>
     <string name="split_search">Search apps</string>
     <string name="split_done">Done</string>
+    <string name="battery_title">Stay connected in the background</string>
+    <string name="battery_text">With the screen off for a while, Android pauses apps and the VPN can drop. Allow FastGame to run in the background to keep it connected.</string>
+    <string name="battery_allow">Allow</string>
+    <string name="battery_later">Not now</string>
 </resources>

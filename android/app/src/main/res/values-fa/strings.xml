@@ -82,4 +82,8 @@
     <string name="split_none">دست‌کم یک برنامه را تیک بزن، وگرنه همه برنامه‌ها از VPN رد می‌شوند.</string>
     <string name="split_search">جستجوی برنامه</string>
     <string name="split_done">تمام</string>
+    <string name="battery_title">اتصال پایدار در پس‌زمینه</string>
+    <string name="battery_text">وقتی مدتی صفحه خاموش است، اندروید برنامه‌ها را متوقف می‌کند و VPN ممکن است قطع شود. اجازه بده FastGame در پس‌زمینه کار کند تا اتصال بماند.</string>
+    <string name="battery_allow">اجازه می‌دهم</string>
+    <string name="battery_later">فعلاً نه</string>
 </resources>
