@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
                                 androidx.compose.foundation.layout.Row(
                                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                                 ) {
-                                    androidx.compose.material3.Text(getString(R.string.keep_switch), Modifier.weight(1f))
+                                    androidx.compose.material3.Text(getString(R.string.keep_switch), androidx.compose.ui.Modifier.weight(1f))
                                     androidx.compose.material3.Switch(keepOn, { on ->
                                         keepOn = on
                                         container.prefs.keepAlive = on
